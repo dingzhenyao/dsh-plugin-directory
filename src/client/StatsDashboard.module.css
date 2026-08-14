@@ -9,7 +9,7 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  line-height: 22px;
+  line-height: 1.4;
   color: var(--dsw-alias-label-primary);
 }
 
@@ -24,9 +24,10 @@
 }
 
 .totalValue {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  color: var(--dsw-alias-label-primary);
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-brand-primary);
 }
 
 .grid {
@@ -39,9 +40,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 8px;
+  border-radius: 12px;
   background: var(--dsw-alias-bg-layer-1);
 }
 
@@ -50,13 +51,15 @@
   font-size: 12px;
   font-weight: 600;
   line-height: 18px;
-  color: var(--dsw-alias-label-secondary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--dsw-alias-label-tertiary);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   margin: 0;
   padding: 0;
   list-style: none;

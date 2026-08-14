@@ -64,7 +64,7 @@ function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
       </ul>
       <div className={css.badges}>
         <span className={css.badge} data-badge="category">{CATEGORY_LABEL[entry.category][lang]}</span>
-        <span className={css.badge} data-badge="installForm">{INSTALL_FORM_LABEL[entry.install.form][lang]}</span>
+        <span className={css.badge} data-badge="installForm" data-form={entry.install.form}>{INSTALL_FORM_LABEL[entry.install.form][lang]}</span>
       </div>
       {command !== null ? (
         <div className={css.install}>

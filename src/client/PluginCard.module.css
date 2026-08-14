@@ -1,11 +1,17 @@
 .card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 14px 16px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 8px;
-  background: var(--dsw-alias-bg-layer-1);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-3);
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.card:hover {
+  border-color: var(--dsw-alias-label-dimmed);
+  box-shadow: var(--dsw-shadow-lv1);
 }
 
 .header {
@@ -17,25 +23,31 @@
 
 .title {
   margin: 0;
-  font-size: 14px;
+  min-width: 0;
+  font-size: 15px;
   font-weight: 600;
-  line-height: 20px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .title a {
   color: var(--dsw-alias-label-primary);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .title a:hover {
   text-decoration: underline;
 }
 
+.title a:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
 .owner {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -47,8 +59,13 @@
 .description {
   margin: 0;
   font-size: 13px;
-  line-height: 20px;
-  color: var(--dsw-alias-label-secondary);
+  line-height: 1.5;
+  color: var(--dsw-alias-label-tertiary);
+  /* Collapse very long descriptions so cards stay compact and scannable. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .meta {
@@ -64,9 +81,10 @@
 }
 
 .meta li {
-  display: flex;
+  display: inline-flex;
   align-items: baseline;
   gap: 4px;
+  min-width: 0;
 }
 
 .meta strong {
@@ -85,10 +103,33 @@
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 999px;
   padding: 1px 8px;
-  background: var(--dsw-alias-bg-layer-2);
+  background: var(--dsw-alias-bg-module-platform);
   font-size: 11px;
-  line-height: 16px;
+  line-height: 17px;
+  font-weight: 500;
+  white-space: nowrap;
   color: var(--dsw-alias-label-secondary);
+}
+
+/* Install-form badges are tinted by how the plugin is installed. */
+.badge[data-form='bundle'] {
+  border-color: var(--dsw-alias-state-success-primary);
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.badge[data-form='repo'] {
+  border-color: var(--dsw-alias-state-business-primary);
+  color: var(--dsw-alias-state-business-primary);
+}
+
+.badge[data-form='client'] {
+  border-color: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-brand-primary);
+}
+
+.badge[data-form='unknown'] {
+  border-color: var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-tertiary);
 }
 
 .install {
@@ -101,12 +142,12 @@
   flex: 1;
   min-width: 0;
   overflow-x: auto;
-  padding: 6px 10px;
+  padding: 7px 10px;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  background: var(--dsw-alias-bg-layer-2);
+  border-radius: 8px;
+  background: var(--dsw-alias-bg-module-platform);
   color: var(--dsw-alias-label-primary);
-  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  font-family: var(--dsw-font-markdown-code-font-family, ui-monospace, SFMono-Regular, Consolas, monospace);
   font-size: 12px;
   line-height: 18px;
   white-space: nowrap;
@@ -114,18 +155,23 @@
 
 .copyButton {
   flex-shrink: 0;
-  border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  padding: 6px 12px;
-  background: transparent;
-  color: var(--dsw-alias-label-primary);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 14px;
+  background: var(--dsw-alias-label-primary);
+  color: var(--dsw-alias-bg-layer-3);
   font: inherit;
-  font-size: 12px;
-  line-height: 18px;
+  font-size: 13px;
+  line-height: 1.5;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .copyButton:hover {
-  background: var(--dsw-alias-bg-layer-2);
+  background: var(--dsw-alias-label-primary-dimmed);
+}
+
+.copyButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
 }

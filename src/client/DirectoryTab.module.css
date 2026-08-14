@@ -25,35 +25,54 @@
 
 .failure button {
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  padding: 4px 10px;
+  border-radius: 8px;
+  padding: 5px 12px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
   font: inherit;
   cursor: pointer;
+}
+
+.failure button:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.failure button:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
 }
 
 .cardList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pager {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
 }
 
 .pageButton {
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  padding: 4px 12px;
+  border-radius: 8px;
+  padding: 5px 14px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+}
+
+.pageButton:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.pageButton:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
 }
 
 .pageButton:disabled {
@@ -68,13 +87,22 @@
 }
 
 .browseAll {
-  align-self: flex-start;
+  align-self: center;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 6px;
-  padding: 4px 12px;
+  border-radius: 8px;
+  padding: 5px 14px;
   background: transparent;
   color: var(--dsw-alias-label-primary);
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+}
+
+.browseAll:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.browseAll:focus-visible {
+  outline: 2px solid var(--dsw-alias-brand-primary);
+  outline-offset: 1px;
 }
