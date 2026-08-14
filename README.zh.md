@@ -39,24 +39,28 @@ npm 安装的 `dsh` 都能满足。
 
 ## 使用
 
-该 tab 基于打包进客户端的 `dsh-plugin` topic 数据快照，完全在浏览器端运行：
+该 tab 基于 `dsh-plugin` topic 数据快照在浏览器端运行：
 
-- **搜索** — 按插件名称、作者或描述过滤。
+- **搜索** — 按插件名称、作者或描述过滤；同时触发 GitHub 实时搜索（见下文）。
 - **类别多选** — 可同时组合任意数量的功能类别（工具、技能、记忆、视觉、界面皮肤、
   MCP、编排、命令行/终端、网页、智能体、其他）。
 - **安装形态筛选** — 限定为插件包 / 仓库 / 客户端 / 未知。
-- **分组维度切换** — 按功能类别、安装形态、语言或 Star 档位分组卡片。
-- **排序** — 按质量分、Star 数或最近更新。
+- **分组维度切换** — 按功能类别、安装形态、语言或 Star 档位分组卡片（默认不分组）。
+- **排序** — 按质量分、Star 数或最近更新（默认按 Star）。
 - **统计看板** — 插件总数，以及按类别、安装形态、语言、Star 档位的分布。
-- **一键安装** — 每张卡片的「安装」按钮复制该插件的安装命令（见下方提取策略）。
+- **一键安装** — 卡片「安装」按钮复制该插件安装命令，**仅当插件自身 README 记录了
+  真实 `dsh` 安装命令时才显示**（见下方提取策略）。
+- **刷新** — 手动刷新按钮从 CDN 重新拉取最新快照。
 
 ## 安装方式提取策略
 
 每条被收录插件都带有 `install` 字段，说明其安装方式，按以下优先级提取：
 
-1. **插件自身 README** — 在插件 README 中找到的第一条真实 `dsh plugin add
-   <target>` 调用（目标为单个无空格的 token，如 npm 包名、`github:owner/repo`
-   或路径）即作为安装命令，并保留该行作为片段；仅在行文中提及 `dsh plugin add`
+1. **插件自身 README** — 在插件 README 中找到的第一条真实安装调用即作为安装命令，
+   并保留该行作为片段。可识别的形式包括 `dsh plugin add <target>`、
+   `dsh plugin --profile <name> add <target>`、
+   `pnpm dsh plugin [--profile <name>] add <target>`，以及裸 `.dsh-plugin`
+   引用（`github:<owner>/<repo>#<ref>&path:/.dsh-plugin`）；仅在行文中提及
    而没有具体目标的，忽略。
 2. **`package.json` 信号** — README 中没有安装命令，但插件清单声明了
    `dsh.client` 或 `dsh.bundle` 时，使用其 npm 包名：`dsh plugin add <package-name>`。
@@ -64,7 +68,9 @@ npm 安装的 `dsh` 都能满足。
    `dsh plugin add github:<owner>/<repo>&path:/.dsh-plugin`。
 4. **回退** — 以上均不适用时：`dsh plugin add github:<owner>/<repo>`。
 
-每张卡片上的「安装」按钮复制的正是该解析结果。
+「安装」按钮**仅在第 1 种情况（README 真检测到命令）时显示**。派生命令（第 2–4 种）
+会记录在条目上备用，但绝不显示按钮——因此 README 未说明如何安装的仓库不会被给出
+一个猜测的安装按钮。
 
 ## 数据同步
 
@@ -74,7 +80,18 @@ npm 安装的 `dsh` 都能满足。
 - `pnpm sync` 手动触发同一管线（深度检查结果缓存在 `data/.inspect-cache.json`，
   仓库 `pushed_at` 未变时复用）。
 - `data/overrides.json` 用于人工纠偏基于关键词的类别分类，键为 `owner/repo`。
-- 数据快照在构建时打包进客户端，tab 运行时无需网络。
+- 数据快照打包进客户端作为离线兜底，tab 运行时从 CDN 刷新（见下文）。
+
+## 运行时刷新与实时搜索
+
+- **CDN 刷新** — 打开时，tab 从 jsDelivr 拉取最新快照
+  （`https://cdn.jsdelivr.net/gh/<owner>/dsh-plugin-directory@main/data`）；
+  成功则替换内置快照并显示上次同步日期，失败（离线）则静默保留内置快照。
+  发布后把 `src/client/data.ts` 中的 `<owner>` 替换为真实 owner；jsDelivr 对
+  GitHub 文件返回 `Access-Control-Allow-Origin: *`。
+- **实时搜索** — 输入搜索词时同时向 GitHub Search API 查询 `topic:dsh-plugin`
+  匹配仓库（防抖、20 条），去重后以「实时结果」区块追加展示。实时结果无 README
+  检测，因此不显示安装按钮；限流/失败时降级为仅本地结果并给出提示。
 
 ## 开发
 
@@ -98,9 +115,13 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
 - **类别标签语言** — 固定文案（tab 名、按钮、占位符）会随界面语言即时生效，但
   类别/安装形态标签字典在页面打开时读取：切换语言后需重新打开该 tab 才能看到
   更新后的标签。
-- **未认证搜索限额** — 同步管线使用 GitHub 搜索 API；CI 中带 `GITHUB_TOKEN`
-  运行（见 `.github/workflows/sync.yml`），但未带 token 的手动 `pnpm sync`
-  很快会耗尽未认证速率限额。
+- **CDN 缓存延迟** — jsDelivr 对快照缓存约 12 小时，CI 新提交最长约 18 小时才会
+  反映到 CDN 刷新；最新仓库由实时搜索补齐。
+- **未认证搜索限额** — 实时搜索从浏览器直连 GitHub 搜索 API（未认证，10 次/分），
+  已做防抖，限流时降级为本地结果；同步管线在 CI 中带 `GITHUB_TOKEN`（见
+  `.github/workflows/sync.yml`）。
+- **`<owner>` 占位** — CDN 地址与 git 安装行在仓库发布前使用 `<owner>` 占位；
+  发布后替换 `src/client/data.ts` 与安装说明中的占位符。
 
 ## License
 

@@ -42,32 +42,37 @@ so both a local `pnpm dsh` checkout and an npm-installed `dsh` satisfy them.
 
 ## Usage
 
-The tab is a full client-side directory over a bundled snapshot of the
-`dsh-plugin` topic:
+The tab is a client-side directory over a snapshot of the `dsh-plugin` topic:
 
-- **Search** — filter by plugin name, owner, or description.
+- **Search** — filter by plugin name, owner, or description; the query also
+  triggers a **live GitHub search** for the latest matching repos (see below).
 - **Category multi-select** — combine any number of function categories
   (tool, skill, memory, vision, UI skin, MCP, orchestration, CLI/TUI, web,
   agent, other).
 - **Install-form filter** — restrict to bundle / repository / client / unknown.
 - **Group-by dimension** — group cards by function category, install form,
-  language, or star bucket.
-- **Sort** — by quality score, stars, or most recent update.
+  language, or star bucket (default: no grouping).
+- **Sort** — by quality score, stars, or most recent update (default: stars).
 - **Statistics dashboard** — totals and breakdowns by category, install form,
   language, and star bucket.
-- **One-click install** — each card's **Install** button copies the plugin's
-  install command (see the extraction policy below).
+- **One-click install** — a card's **Install** button copies the plugin's
+  install command, shown **only when the plugin's own README documents a real
+  `dsh` install command** (see the extraction policy below).
+- **Refresh** — a manual refresh button re-pulls the latest snapshot from the
+  CDN.
 
 ## Install-method extraction policy
 
 Every listed plugin carries an `install` field describing how to install it.
 It is derived in priority order:
 
-1. **Plugin's own README** — the first real `dsh plugin add <target>`
-   invocation (a single whitespace-free target token such as an npm package
-   name, `github:owner/repo`, or a path) found in the plugin's README becomes
-   the command, with the source line kept as a snippet. Prose mentions of
-   `dsh plugin add` without a concrete target are ignored.
+1. **Plugin's own README** — the first real install invocation found in the
+   README becomes the command, with the source line kept as a snippet. The
+   scanner accepts `dsh plugin add <target>`,
+   `dsh plugin --profile <name> add <target>`,
+   `pnpm dsh plugin [--profile <name>] add <target>`, and a bare
+   `.dsh-plugin` reference (`github:<owner>/<repo>#<ref>&path:/.dsh-plugin`).
+   Prose mentions without a concrete target are ignored.
 2. **`package.json` signals** — when the README has no install command but the
    plugin's manifest declares `dsh.client` or `dsh.bundle`, the npm package
    name is used: `dsh plugin add <package-name>`.
@@ -75,7 +80,11 @@ It is derived in priority order:
    manifest) is installed from the repo: `dsh plugin add github:<owner>/<repo>&path:/.dsh-plugin`.
 4. **Fallback** — when nothing above applies: `dsh plugin add github:<owner>/<repo>`.
 
-The **Install** button on each card copies exactly this resolved command.
+The **Install** button is shown **only for step 1** — when the plugin's own
+README actually documents a `dsh` install command. Derived commands (steps
+2–4) are recorded on the entry for future use but never surface a button, so
+a repository whose README does not explain how to install it is never given a
+guessed install button.
 
 ## Data sync
 
@@ -88,8 +97,23 @@ The **Install** button on each card copies exactly this resolved command.
   is unchanged).
 - `data/overrides.json` lets humans correct the keyword-based category
   classification, keyed by `owner/repo`.
-- The snapshot is bundled into the client at build time, so the tab needs no
-  network access at runtime.
+- The snapshot is bundled into the client as an offline fallback, and the tab
+  refreshes it from a CDN at runtime (see below).
+
+## Runtime data refresh & live search
+
+- **CDN refresh** — on open, the tab fetches the latest snapshot from
+  jsDelivr (`https://cdn.jsdelivr.net/gh/<owner>/dsh-plugin-directory@main/data`);
+  if it succeeds it replaces the bundled snapshot and shows the last sync
+  date, and if it fails (offline) it silently keeps the bundled snapshot.
+  Replace `<owner>` in `src/client/data.ts` with the real owner once the repo
+  is published; jsDelivr serves GitHub files with `Access-Control-Allow-Origin: *`.
+- **Live search** — typing a query also queries the GitHub Search API for
+  `topic:dsh-plugin` repositories matching the query (debounced, 20 results),
+  and appends them as a **Live results** section (deduped against the
+  snapshot). Live results have no README inspection, so they show no install
+  button. On rate-limit / failure the tab degrades to local results with a
+  notice.
 
 ## Development
 
@@ -114,10 +138,16 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   follows the active UI language immediately, but category/install-form label
   dictionaries are read when the tab page opens: after switching the UI
   language, reopen the tab for the updated labels.
-- **Unauthenticated search quota** — the sync pipeline uses the GitHub search
-  API; in CI it runs with `GITHUB_TOKEN` (see `.github/workflows/sync.yml`),
-  but a manual `pnpm sync` without a token can exhaust the unauthenticated
-  rate limit quickly.
+- **CDN cache delay** — jsDelivr caches the snapshot for ~12h, so a fresh CI
+  commit can take up to ~18h to reach the CDN refresh; live search covers the
+  gap for newest repos.
+- **Unauthenticated search quota** — the live-search feature queries GitHub's
+  search API from the browser (unauthenticated, 10 requests/minute); it is
+  debounced and degrades to local results on rate-limit. The sync pipeline
+  uses `GITHUB_TOKEN` in CI (see `.github/workflows/sync.yml`).
+- **`<owner>` placeholder** — the CDN URL and git-install line use `<owner>`
+  until the repository is published; replace it in `src/client/data.ts` and
+  the install instructions.
 
 ## License
 
