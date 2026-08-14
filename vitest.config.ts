@@ -6,7 +6,7 @@ export default defineConfig({
     // under the DSH file sandbox; `scripts/vitest-sandbox.cjs` preloads the
     // exec probe neutralizer (see that file).
     pool: 'threads',
-    include: ['tests/**/*.spec.{ts,tsx}'],
+    include: ['tests/**/*.{test,spec}.{ts,tsx}'],
     // CSS Modules resolve to their authored class names (the client
     // component tests assert rendered output, not hashed class identities).
     css: {
