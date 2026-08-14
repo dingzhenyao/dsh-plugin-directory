@@ -42,6 +42,14 @@ export const zh = {
   next: '下一页',
   pageOf: '第 {page}/{total} 页',
   topBanner: '按 Star 数展示前 {count} 个',
+  refresh: '刷新',
+  refreshing: '刷新中…',
+  refreshFailed: '刷新失败，仍显示内置数据',
+  syncedAt: '数据更新于 {time}',
+  liveTitle: '实时搜索结果',
+  liveHint: '来自 GitHub 实时搜索，可能尚未收录',
+  liveRateLimited: '实时搜索受限，仅显示本地结果',
+  liveLoading: '实时搜索中…',
 } satisfies Record<string, string>
 
 /** Plugin directory locale key union. */
@@ -89,4 +97,12 @@ export const en = {
   next: 'Next',
   pageOf: 'Page {page}/{total}',
   topBanner: 'Showing top {count} by stars',
+  refresh: 'Refresh',
+  refreshing: 'Refreshing…',
+  refreshFailed: 'Refresh failed, showing bundled data',
+  syncedAt: 'Data updated {time}',
+  liveTitle: 'Live results',
+  liveHint: 'Live from GitHub, may not be in the directory yet',
+  liveRateLimited: 'Live search rate-limited, showing local results only',
+  liveLoading: 'Searching live…',
 } satisfies Record<DirectoryLocaleKey, string>

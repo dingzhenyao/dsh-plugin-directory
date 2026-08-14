@@ -104,4 +104,28 @@ describe('installFromReadme', () => {
     expect(info.command).toBe('dsh plugin add @scope/pkg')
     expect(info.source).toBe('readme')
   })
+
+  it('extracts a `--profile` invocation', () => {
+    const info = installFromReadme('dsh plugin --profile web add @scope/foo', 'a/b', 'bundle')
+    expect(info.command).toBe('dsh plugin add @scope/foo')
+    expect(info.source).toBe('readme')
+  })
+
+  it('extracts a `pnpm dsh plugin add` source invocation', () => {
+    const info = installFromReadme('pnpm dsh plugin add github:a/b', 'a/b', 'unknown')
+    expect(info.command).toBe('dsh plugin add github:a/b')
+    expect(info.source).toBe('readme')
+  })
+
+  it('extracts a `pnpm dsh plugin --profile ... add` invocation', () => {
+    const info = installFromReadme('pnpm dsh plugin --profile web add @scope/foo', 'a/b', 'bundle')
+    expect(info.command).toBe('dsh plugin add @scope/foo')
+    expect(info.source).toBe('readme')
+  })
+
+  it('extracts a bare `.dsh-plugin` repository reference', () => {
+    const info = installFromReadme('config.yaml: github:owner/repo#main&path:/.dsh-plugin', 'owner/repo', 'repo')
+    expect(info.command).toBe('dsh plugin add github:owner/repo#main&path:/.dsh-plugin')
+    expect(info.source).toBe('readme')
+  })
 })

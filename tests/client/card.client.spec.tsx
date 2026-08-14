@@ -87,7 +87,7 @@ describe('PluginCard', () => {
   })
 
   it('shows the install command in a code element and copies it to the clipboard on click', async () => {
-    const entry = pluginFixture()
+    const entry = pluginFixture({ install: { form: 'bundle', command: 'dsh plugin add dsh-plugin-demo', source: 'readme' } })
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText } })
     const view = render(<PluginCard entry={entry} lang="zh" t={makeT(zh)} />)
@@ -104,6 +104,13 @@ describe('PluginCard', () => {
     expect(view.container.querySelector('code[data-install-command]')).toBeNull()
     expect(screen.queryByText(en.install)).toBeNull()
     expect(screen.queryByText(en.copied)).toBeNull()
+  })
+
+  it('omits the install button when the install source is not the README', () => {
+    const entry = pluginFixture({ install: { form: 'bundle', command: 'dsh plugin add dsh-plugin-demo', source: 'derived' } })
+    const view = render(<PluginCard entry={entry} lang="zh" t={makeT(zh)} />)
+    expect(view.container.querySelector('button[data-install-button]')).toBeNull()
+    expect(view.container.querySelector('code[data-install-command]')).toBeNull()
   })
 
   it('falls back to localized no-description / no-license copy and an em dash for the language', () => {

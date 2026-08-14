@@ -21,6 +21,9 @@ export interface PluginCardProps {
 function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
   const [copied, setCopied] = useState(false)
   const command = entry.install.command
+  // Install button only when the plugin's own README documented a real `dsh`
+  // install command; derived/guessed commands are intentionally not shown.
+  const showInstall = entry.install.source === 'readme' && command !== null
 
   // Flip the button back to its idle label shortly after a successful copy;
   // the timer is torn down on unmount or when the confirmation clears.
@@ -66,7 +69,7 @@ function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
         <span className={css.badge} data-badge="category">{CATEGORY_LABEL[entry.category][lang]}</span>
         <span className={css.badge} data-badge="installForm" data-form={entry.install.form}>{INSTALL_FORM_LABEL[entry.install.form][lang]}</span>
       </div>
-      {command !== null ? (
+      {showInstall ? (
         <div className={css.install}>
           <code className={css.command} data-install-command>{command}</code>
           <button type="button" className={css.copyButton} data-install-button onClick={copy}>

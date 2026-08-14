@@ -44,29 +44,43 @@ export function installFromPackageJson(pkg: PackageManifest, id: string): Instal
   return info
 }
 
-/** Matches a `dsh plugin add` invocation anywhere in a line. */
-const README_COMMAND_RE = /dsh plugin add[^\r\n]*/
+/**
+ * Matches a `dsh plugin add <target>` invocation, optionally prefixed by
+ * `pnpm ` and/or a `--profile <name>` flag. Capture group 1 is the single
+ * whitespace-free install target (npm package name, `github:owner/repo`, or a
+ * `.dsh-plugin` repo reference).
+ */
+const DSH_ADD_RE = /(?:pnpm\s+)?dsh\s+plugin(?:\s+--profile\s+\S+)?\s+add\s+(\S+)/
+
+/**
+ * Matches a bare `.dsh-plugin` repository install reference (the config.yaml
+ * style some repo plugins document, e.g.
+ * `github:owner/repo#ref&path:/.dsh-plugin`).
+ */
+const DSH_PLUGIN_REF_RE = /(github:[^\s`"'()]+&path:\/\.dsh-plugin)/
+
 /** Trailing quote/punctuation that may wrap a command in prose (e.g. "my-plugin`."). */
 const COMMAND_TRAIL_RE = /[`.,;:)\]}>]+$/
 
 /**
- * Extracts a real `dsh plugin add <target>` command from one README line, or
- * `null` when the line only mentions the command in prose. A real invocation
- * has exactly one whitespace-free target token (npm package name,
- * `github:owner/repo`, or path); prose like "via `dsh plugin add` (each
- * declares ...)" or "dsh plugin add is required" has more than one token and
- * is rejected so the README scanner does not emit mangled commands.
+ * Extracts a real `dsh` install command from one README line, or `null` when
+ * the line only mentions the command in prose. Accepts:
+ *   - `dsh plugin add <target>`
+ *   - `dsh plugin --profile <name> add <target>`
+ *   - `pnpm dsh plugin [--profile <name>] add <target>`
+ *   - a bare `github:...&path:/.dsh-plugin` reference
+ * A real invocation has exactly one whitespace-free target token; prose like
+ * "via `dsh plugin add` (each declares ...)" has no target and is rejected.
  */
 function readmeCommand(line: string): string | null {
-  const match = line.match(README_COMMAND_RE)
-  if (!match?.[0]) return null
-  const rest = match[0].slice('dsh plugin add'.length).trim()
-  if (rest === '') return null
-  const tokens = rest.split(/\s+/)
-  if (tokens.length !== 1) return null
-  const target = tokens[0]?.replace(COMMAND_TRAIL_RE, '')
-  if (!target) return null
-  return `dsh plugin add ${target}`
+  const add = line.match(DSH_ADD_RE)
+  if (add?.[1]) {
+    const target = add[1].replace(COMMAND_TRAIL_RE, '')
+    if (target !== '') return `dsh plugin add ${target}`
+  }
+  const ref = line.match(DSH_PLUGIN_REF_RE)
+  if (ref?.[1]) return `dsh plugin add ${ref[1]}`
+  return null
 }
 
 /**

@@ -4,7 +4,7 @@ import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { DirectoryTab, type DirectoryTabInjected } from './DirectoryTab.tsx'
-import { meta, plugins } from './data.ts'
+import { FALLBACK } from './data.ts'
 import { en, zh, type DirectoryLocaleKey } from './locales.ts'
 
 export type { DirectoryTabInjected, DirectoryTabProps } from './DirectoryTab.tsx'
@@ -28,12 +28,13 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-plugin-directory: dictionaries')
 
   const t = ctx.locale.bind(NS)
-  // The snapshot is bundled at build time; the face is re-read on every
-  // render so the active locale and latest data both stay current.
+  // The bundled snapshot is the offline fallback; the tab refreshes it from
+  // the CDN at runtime. The face is re-read on every render so the active
+  // locale and latest data both stay current.
   const injected = (): DirectoryTabInjected => ({
     lang: ctx.locale.getLocale().active,
-    plugins,
-    meta,
+    plugins: FALLBACK.plugins,
+    meta: FALLBACK.meta,
   })
 
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({

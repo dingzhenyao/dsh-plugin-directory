@@ -1,17 +1,19 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import css from './DirectoryTab.module.css'
 import { StatsDashboard } from './StatsDashboard.tsx'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
+import { CDN_BASE, fetchRemote, type Snapshot } from './data.ts'
 import { filterAndSort, type FilterControls } from './filter.ts'
+import { searchLive } from './liveSearch.ts'
 
-/** Registration-side inject face: the bundled bilingual snapshot. */
+/** Registration-side inject face: the bundled bilingual snapshot (the fallback). */
 export interface DirectoryTabInjected {
   /** Active UI language; drives category / install-form label lookups. */
   lang: 'zh' | 'en'
-  /** Bundled plugin entries. */
+  /** Bundled plugin entries (offline fallback). */
   plugins: PluginEntry[]
   /** Bundled directory statistics. */
   meta: MetaFile
@@ -22,10 +24,11 @@ export type DirectoryTabProps =
   PropsLocale<'directory'>
   & InjectFace<DirectoryTabInjected>
 
-type ViewState =
-  | { readonly status: 'loading' }
-  | { readonly status: 'error' }
-  | { readonly status: 'ready'; readonly count: number }
+type ViewStatus = 'loading' | 'error' | 'ready'
+
+type RefreshState = 'idle' | 'refreshing' | 'failed'
+
+type LiveState = 'idle' | 'loading' | 'ready' | 'error'
 
 /** Cards per page. */
 const PAGE_SIZE = 10
@@ -33,13 +36,17 @@ const PAGE_SIZE = 10
 /** Default curated scope: the top-N by the active sort when nothing filters. */
 const TOP_N = 50
 
-/** Debounce the search query by this many milliseconds. */
-const QUERY_DEBOUNCE_MS = 180
+/** Debounce the search query by this many milliseconds (local filter + live). */
+const QUERY_DEBOUNCE_MS = 250
 
 /** Render the plugin directory tab with loading / empty / error seats. */
 export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): ReactNode {
-  const [state, setState] = useState<ViewState>({ status: 'loading' })
+  const [viewStatus, setViewStatus] = useState<ViewStatus>('loading')
   const [request, setRequest] = useState(0)
+
+  // The bundled snapshot is the offline fallback; a CDN fetch may replace it.
+  const [snapshot, setSnapshot] = useState<Snapshot>({ plugins, meta })
+  const [refreshState, setRefreshState] = useState<RefreshState>('idle')
 
   // Search text is a separate controlled value so it can be debounced; the
   // chip / sort / group-by controls report changes immediately.
@@ -54,38 +61,79 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
   const [page, setPage] = useState(0)
   const [showAll, setShowAll] = useState(false)
 
+  // Live search results (latest matching repos beyond the snapshot).
+  const [liveState, setLiveState] = useState<LiveState>('idle')
+  const [liveEntries, setLiveEntries] = useState<PluginEntry[]>([])
+
   useEffect(() => {
     const id = setTimeout(() => setDebouncedQuery(query), QUERY_DEBOUNCE_MS)
     return () => clearTimeout(id)
   }, [query])
 
+  // Validate the injected fallback payload; the snapshot itself is trusted
+  // once the fallback is confirmed array-shaped.
   useEffect(() => {
     let current = true
-    // The snapshot arrives synchronously through the inject face; the
-    // microtask keeps the loading seat renderable and mirrors the async
-    // remote-loading pattern. A malformed injected payload (corrupt bundle
-    // data) rejects and lands on the error seat instead of crashing.
     void Promise.resolve().then(() => {
       if (!current) return
       if (!Array.isArray(plugins) || meta === null || typeof meta !== 'object') {
         throw new TypeError('directory snapshot is malformed')
       }
-      setState({ status: 'ready', count: plugins.length })
+      setViewStatus('ready')
     }).catch(() => {
-      if (current) setState({ status: 'error' })
+      if (current) setViewStatus('error')
     })
     return () => { current = false }
   }, [plugins, meta, request])
+
+  // Refresh the snapshot from the CDN once on mount, then on demand.
+  const refresh = useCallback(() => {
+    setRefreshState('refreshing')
+    void fetchRemote(CDN_BASE).then((remote) => {
+      if (remote !== null) {
+        setSnapshot(remote)
+        setRefreshState('idle')
+      } else {
+        setRefreshState('failed')
+      }
+    })
+  }, [])
+
+  useEffect(() => { refresh() }, [refresh])
+
+  // Live search whenever the debounced query is non-empty.
+  useEffect(() => {
+    const q = debouncedQuery.trim()
+    if (q === '') {
+      setLiveState('idle')
+      setLiveEntries([])
+      return
+    }
+    let cancelled = false
+    setLiveState('loading')
+    searchLive(q).then((entries) => {
+      if (cancelled) return
+      setLiveEntries(entries)
+      setLiveState('ready')
+    }).catch(() => {
+      if (cancelled) return
+      setLiveEntries([])
+      setLiveState('error')
+    })
+    return () => { cancelled = true }
+  }, [debouncedQuery])
 
   // Reset to the first page whenever the effective filter changes.
   useEffect(() => { setPage(0) }, [debouncedQuery, controls])
 
   const retry = (): void => {
-    setState({ status: 'loading' })
+    setViewStatus('loading')
     setRequest(value => value + 1)
   }
 
-  const list = Array.isArray(plugins) ? plugins : []
+  // Guard a malformed injected snapshot (null/non-array) before filtering; the
+  // error seat still renders once the validation effect lands.
+  const list = Array.isArray(snapshot.plugins) ? snapshot.plugins : []
 
   // Filter/sort/group once per effective filter change (not per keystroke).
   const { groups, visible } = useMemo(
@@ -105,21 +153,48 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
     [scoped, safePage],
   )
 
+  // Live results deduped against the snapshot, then category/form filtered.
+  const snapshotIds = useMemo(() => new Set(list.map(entry => entry.id)), [list])
+  const isLiveActive = debouncedQuery.trim() !== ''
+  const liveVisible = useMemo(() => {
+    if (liveState !== 'ready') return []
+    const fresh = liveEntries.filter(entry => !snapshotIds.has(entry.id))
+    const liveGroups = filterAndSort(fresh, { ...controls, query: '' }, lang)
+    return liveGroups.groups.flatMap(group => group.entries)
+  }, [liveEntries, liveState, snapshotIds, controls, lang])
+
+  const syncedAt = snapshot.meta.syncedAt.slice(0, 10)
+
   return (
-    <div className={css.root} data-directory lang={lang} aria-busy={state.status === 'loading'}>
-      {state.status === 'loading' ? <p className={css.status}>{t('loading')}</p> : null}
-      {state.status === 'error' ? (
+    <div className={css.root} data-directory lang={lang} aria-busy={viewStatus === 'loading'}>
+      {viewStatus === 'loading' ? <p className={css.status}>{t('loading')}</p> : null}
+      {viewStatus === 'error' ? (
         <div className={css.failure}>
           <p role="alert">{t('error')}</p>
           <button type="button" onClick={retry}>{t('retry')}</button>
         </div>
       ) : null}
-      {state.status === 'ready' ? (
-        state.count === 0
+      {viewStatus === 'ready' ? (
+        list.length === 0
           ? <p className={css.status}>{t('empty')}</p>
           : (
             <>
-              <p className={css.status}>{t('repoCount', { count: String(state.count) })}</p>
+              <div className={css.headRow}>
+                <p className={css.status}>{t('repoCount', { count: String(list.length) })}</p>
+                <button
+                  type="button"
+                  className={css.refresh}
+                  data-refresh
+                  onClick={refresh}
+                  disabled={refreshState === 'refreshing'}
+                >
+                  {refreshState === 'refreshing' ? t('refreshing') : t('refresh')}
+                </button>
+              </div>
+              <p className={css.status} data-synced>
+                {t('syncedAt', { time: syncedAt })}
+                {refreshState === 'failed' ? ` · ${t('refreshFailed')}` : ''}
+              </p>
               <FilterBar
                 query={query}
                 lang={lang}
@@ -164,7 +239,20 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                   {t('browseAll', { count: String(flat.length) })}
                 </button>
               ) : null}
-              <StatsDashboard meta={meta} lang={lang} t={t} />
+              {isLiveActive && liveState === 'loading' ? <p className={css.status}>{t('liveLoading')}</p> : null}
+              {isLiveActive && liveState === 'error' ? <p className={css.status} role="status">{t('liveRateLimited')}</p> : null}
+              {isLiveActive && liveState === 'ready' && liveVisible.length > 0 ? (
+                <section className={css.liveSection} data-live-section>
+                  <h3 className={css.liveTitle}>{t('liveTitle')}</h3>
+                  <p className={css.liveHint}>{t('liveHint')}</p>
+                  <div className={css.cardList}>
+                    {liveVisible.map(entry => (
+                      <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+              <StatsDashboard meta={snapshot.meta} lang={lang} t={t} />
             </>
           )
       ) : null}
