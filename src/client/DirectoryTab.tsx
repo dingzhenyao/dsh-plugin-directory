@@ -1,11 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import css from './DirectoryTab.module.css'
 import { StatsDashboard } from './StatsDashboard.tsx'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
-import { filterAndSort, type FilterState } from './filter.ts'
+import { filterAndSort, type FilterControls } from './filter.ts'
 
 /** Registration-side inject face: the bundled bilingual snapshot. */
 export interface DirectoryTabInjected {
@@ -27,17 +27,37 @@ type ViewState =
   | { readonly status: 'error' }
   | { readonly status: 'ready'; readonly count: number }
 
+/** Cards per page. */
+const PAGE_SIZE = 10
+
+/** Default curated scope: the top-N by the active sort when nothing filters. */
+const TOP_N = 50
+
+/** Debounce the search query by this many milliseconds. */
+const QUERY_DEBOUNCE_MS = 180
+
 /** Render the plugin directory tab with loading / empty / error seats. */
 export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): ReactNode {
   const [state, setState] = useState<ViewState>({ status: 'loading' })
   const [request, setRequest] = useState(0)
-  const [filter, setFilter] = useState<FilterState>(() => ({
-    query: '',
+
+  // Search text is a separate controlled value so it can be debounced; the
+  // chip / sort / group-by controls report changes immediately.
+  const [query, setQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [controls, setControls] = useState<FilterControls>({
     categories: new Set(),
     installForms: new Set(),
-    groupBy: 'category',
-    sort: 'score',
-  }))
+    groupBy: 'none',
+    sort: 'stars',
+  })
+  const [page, setPage] = useState(0)
+  const [showAll, setShowAll] = useState(false)
+
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query), QUERY_DEBOUNCE_MS)
+    return () => clearTimeout(id)
+  }, [query])
 
   useEffect(() => {
     let current = true
@@ -57,15 +77,33 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
     return () => { current = false }
   }, [plugins, meta, request])
 
+  // Reset to the first page whenever the effective filter changes.
+  useEffect(() => { setPage(0) }, [debouncedQuery, controls])
+
   const retry = (): void => {
     setState({ status: 'loading' })
     setRequest(value => value + 1)
   }
 
-  // Filtered grouping of the injected snapshot for the current controls; the
-  // Array.isArray guard keeps a malformed payload from crashing this seat
-  // before the effect lands on the error state.
-  const { groups, visible } = filterAndSort(Array.isArray(plugins) ? plugins : [], filter, lang)
+  const list = Array.isArray(plugins) ? plugins : []
+
+  // Filter/sort/group once per effective filter change (not per keystroke).
+  const { groups, visible } = useMemo(
+    () => filterAndSort(list, { ...controls, query: debouncedQuery }, lang),
+    [list, controls, debouncedQuery, lang],
+  )
+
+  const flat = useMemo(() => groups.flatMap(group => group.entries), [groups])
+  const isFiltering = debouncedQuery.trim() !== '' || controls.categories.size > 0 || controls.installForms.size > 0
+
+  // Curated default: top 50 by stars unless the user filters or expands.
+  const scoped = useMemo(() => (isFiltering || showAll ? flat : flat.slice(0, TOP_N)), [flat, isFiltering, showAll])
+  const totalPages = Math.max(1, Math.ceil(scoped.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages - 1)
+  const pageEntries = useMemo(
+    () => scoped.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE),
+    [scoped, safePage],
+  )
 
   return (
     <div className={css.root} data-directory lang={lang} aria-busy={state.status === 'loading'}>
@@ -82,21 +120,50 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
           : (
             <>
               <p className={css.status}>{t('repoCount', { count: String(state.count) })}</p>
-              <FilterBar state={filter} lang={lang} t={t} onChange={setFilter} />
-              <p className={css.status}>{t('visibleCount', { count: String(visible) })}</p>
-              {groups.map(group => (
-                <section key={group.key} className={css.group} data-group={group.key}>
-                  <h3 className={css.groupTitle}>
-                    <span data-group-label>{group.label}</span>
-                    <span className={css.groupCount} data-group-count>{group.entries.length}</span>
-                  </h3>
-                  <div className={css.cardList}>
-                    {group.entries.map(entry => (
-                      <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
-                    ))}
-                  </div>
-                </section>
-              ))}
+              <FilterBar
+                query={query}
+                lang={lang}
+                t={t}
+                controls={controls}
+                onQueryChange={setQuery}
+                onControlsChange={setControls}
+              />
+              <p className={css.status}>
+                {t('visibleCount', { count: String(visible) })}
+                {!isFiltering && !showAll ? ` · ${t('topBanner', { count: String(TOP_N) })}` : ''}
+              </p>
+              <div className={css.cardList}>
+                {pageEntries.map(entry => (
+                  <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
+                ))}
+              </div>
+              {pageEntries.length === 0 ? <p className={css.status}>{t('empty')}</p> : null}
+              <nav className={css.pager} aria-label={t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}>
+                <button
+                  type="button"
+                  className={css.pageButton}
+                  disabled={safePage === 0}
+                  onClick={() => setPage(value => Math.max(0, value - 1))}
+                >
+                  {t('prev')}
+                </button>
+                <span className={css.pageIndicator} data-page-indicator>
+                  {t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}
+                </span>
+                <button
+                  type="button"
+                  className={css.pageButton}
+                  disabled={safePage >= totalPages - 1}
+                  onClick={() => setPage(value => Math.min(totalPages - 1, value + 1))}
+                >
+                  {t('next')}
+                </button>
+              </nav>
+              {!isFiltering && !showAll ? (
+                <button type="button" className={css.browseAll} onClick={() => setShowAll(true)}>
+                  {t('browseAll', { count: String(flat.length) })}
+                </button>
+              ) : null}
               <StatsDashboard meta={meta} lang={lang} t={t} />
             </>
           )

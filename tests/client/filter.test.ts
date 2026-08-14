@@ -46,8 +46,7 @@ function ids(result: ReturnType<typeof filterAndSort>): string[] {
 }
 
 describe('filterAndSort — query filtering', () => {
-  it('matches name, description, or owner with a case-insensitive includes', () => {
-    const entries = [
+  it('matches name, description, or owner with a case-insensitive includes', () => {    const entries = [
       plugin({ id: 'a/one', name: 'VisionLens', owner: 'alice' }),
       plugin({ id: 'b/two', name: 'other', owner: 'bob', description: 'vision pipeline' }),
       plugin({ id: 'c/three', name: 'third', owner: 'VisionWorks' }),
@@ -167,6 +166,18 @@ describe('filterAndSort — grouping', () => {
       CATEGORY_LABEL.vision.zh,
     ])
     expect(result.groups[0]?.entries.map(entry => entry.id)).toEqual(['t1', 't2'])
+  })
+
+  it('keeps a flat single group in sort order when groupBy is none', () => {
+    const entries = [
+      plugin({ id: 'v', category: 'vision', stars: 30 }),
+      plugin({ id: 't', category: 'tool', stars: 20 }),
+    ]
+    const result = filterAndSort(entries, state({ groupBy: 'none', sort: 'stars' }), 'zh')
+    expect(result.groups).toHaveLength(1)
+    expect(result.groups[0]?.key).toBe('none')
+    expect(result.groups[0]?.label).toBe('')
+    expect(result.groups[0]?.entries.map(entry => entry.id)).toEqual(['v', 't'])
   })
 
   it('renders the English category labels symmetrically', () => {

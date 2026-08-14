@@ -1,8 +1,8 @@
 import type { FunctionCategory, InstallForm, PluginEntry } from '../data/types.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL, STAR_BUCKETS, starBucket } from '../data/constants.ts'
 
-/** Grouping dimension the user can pick: category, install form, language, or star bucket. */
-export type GroupBy = 'category' | 'installForm' | 'language' | 'starBucket'
+/** Grouping dimension the user can pick: none, category, install form, language, or star bucket. */
+export type GroupBy = 'none' | 'category' | 'installForm' | 'language' | 'starBucket'
 
 /** In-group ordering the user can pick: quality score, star count, or last push. */
 export type SortKey = 'score' | 'stars' | 'recent'
@@ -20,6 +20,13 @@ export interface FilterState {
   /** Active in-group sort key. */
   sort: SortKey
 }
+
+/**
+ * The non-query controls (categories / forms / group-by / sort). The search
+ * query is split out so the caller can debounce it independently of the
+ * instant chip/sort toggles.
+ */
+export type FilterControls = Omit<FilterState, 'query'>
 
 /** One non-empty group of the filtered, sorted listing. */
 export interface GroupResult {
@@ -87,6 +94,8 @@ function sortEntries(entries: PluginEntry[], sort: SortKey): PluginEntry[] {
 /** Partitions the (already sorted) entries into ordered non-empty groups. */
 function groupEntries(entries: PluginEntry[], groupBy: GroupBy, lang: 'zh' | 'en'): GroupResult[] {
   switch (groupBy) {
+    case 'none':
+      return [{ key: 'none', label: '', entries }]
     case 'category': {
       const byKey = new Map<FunctionCategory, PluginEntry[]>()
       for (const entry of entries) {

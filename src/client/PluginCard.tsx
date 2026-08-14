@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { memo, useEffect, useState, type ReactNode } from 'react'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginEntry } from '../data/types.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL } from '../data/constants.ts'
@@ -18,7 +18,7 @@ export interface PluginCardProps {
 }
 
 /** Render a semantic, bilingual repository card with one-click install. */
-export function PluginCard({ entry, lang, t }: PluginCardProps): ReactNode {
+function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
   const [copied, setCopied] = useState(false)
   const command = entry.install.command
 
@@ -77,3 +77,6 @@ export function PluginCard({ entry, lang, t }: PluginCardProps): ReactNode {
     </article>
   )
 }
+
+/** Memoized card: re-renders only when its entry, language, or translate changes. */
+export const PluginCard = memo(PluginCardImpl)

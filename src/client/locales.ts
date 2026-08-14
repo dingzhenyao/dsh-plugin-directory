@@ -23,6 +23,7 @@ export const zh = {
   groupByInstallForm: '按安装形态分组',
   groupByLanguage: '按语言分组',
   groupByStarBucket: '按 Star 档位分组',
+  groupByNone: '不分组',
   sortScore: '按质量分',
   sortStars: '按 Star 数',
   sortRecent: '按最近更新',
@@ -36,6 +37,11 @@ export const zh = {
   noDescription: '暂无描述',
   visibleCount: '显示 {count} 个',
   repoCount: '共 {count} 个插件',
+  browseAll: '浏览全部 {count} 个插件',
+  prev: '上一页',
+  next: '下一页',
+  pageOf: '第 {page}/{total} 页',
+  topBanner: '按 Star 数展示前 {count} 个',
 } satisfies Record<string, string>
 
 /** Plugin directory locale key union. */
@@ -64,6 +70,7 @@ export const en = {
   groupByInstallForm: 'Group by install form',
   groupByLanguage: 'Group by language',
   groupByStarBucket: 'Group by star bucket',
+  groupByNone: 'No grouping',
   sortScore: 'By quality score',
   sortStars: 'By stars',
   sortRecent: 'By recent update',
@@ -77,4 +84,9 @@ export const en = {
   noDescription: 'No description',
   visibleCount: 'Showing {count}',
   repoCount: '{count} plugins in total',
+  browseAll: 'Browse all {count} plugins',
+  prev: 'Previous',
+  next: 'Next',
+  pageOf: 'Page {page}/{total}',
+  topBanner: 'Showing top {count} by stars',
 } satisfies Record<DirectoryLocaleKey, string>

@@ -3,19 +3,27 @@ import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { FunctionCategory, InstallForm } from '../data/types.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL } from '../data/constants.ts'
 import type { DirectoryLocaleKey } from './locales.ts'
-import type { FilterState, GroupBy, SortKey } from './filter.ts'
+import type { FilterControls, GroupBy, SortKey } from './filter.ts'
 import css from './FilterBar.module.css'
 
-/** Search + user-selectable classification/sort controls, driven by the caller's filter state. */
+/**
+ * Search + user-selectable classification/sort controls. The search query is
+ * a separate controlled value so the caller can debounce it, while the chip /
+ * sort / group-by toggles report changes immediately.
+ */
 export interface FilterBarProps {
-  /** Current filter/sort/group state (controlled). */
-  state: FilterState
+  /** Immediate search text (typed, not yet debounced). */
+  query: string
   /** Active UI language; drives category / install-form label lookups. */
   lang: 'zh' | 'en'
   /** Bound directory-namespace translate. */
   t: TranslateNS<'directory'>
-  /** Reports the next filter state on any user change. */
-  onChange: (next: FilterState) => void
+  /** Non-query controls (categories / forms / group-by / sort). */
+  controls: FilterControls
+  /** Reports the next search text on each keystroke. */
+  onQueryChange: (query: string) => void
+  /** Reports the next controls state on any chip / toggle change. */
+  onControlsChange: (controls: FilterControls) => void
 }
 
 /** All function-category keys in canonical order (the label table is the source of truth). */
@@ -25,13 +33,14 @@ const CATEGORY_KEYS = Object.keys(CATEGORY_LABEL) as FunctionCategory[]
 const FORM_KEYS = Object.keys(INSTALL_FORM_LABEL) as InstallForm[]
 
 /** Grouping dimensions in the order they appear in the UI. */
-const GROUP_BY_KEYS: GroupBy[] = ['category', 'installForm', 'language', 'starBucket']
+const GROUP_BY_KEYS: GroupBy[] = ['none', 'category', 'installForm', 'language', 'starBucket']
 
 /** Sort keys in the order they appear in the UI. */
 const SORT_KEYS: SortKey[] = ['score', 'stars', 'recent']
 
 /** Locale key of each grouping dimension's toggle label. */
 const GROUP_BY_LABEL: Record<GroupBy, DirectoryLocaleKey> = {
+  none: 'groupByNone',
   category: 'groupByCategory',
   installForm: 'groupByInstallForm',
   language: 'groupByLanguage',
@@ -46,19 +55,19 @@ const SORT_LABEL: Record<SortKey, DirectoryLocaleKey> = {
 }
 
 /** Render the bilingual search box, multi-select chips, and grouping/sort toggles. */
-export function FilterBar({ state, lang, t, onChange }: FilterBarProps): ReactNode {
+export function FilterBar({ query, lang, t, controls, onQueryChange, onControlsChange }: FilterBarProps): ReactNode {
   const toggleCategory = (category: FunctionCategory): void => {
-    const categories = new Set(state.categories)
+    const categories = new Set(controls.categories)
     if (categories.has(category)) categories.delete(category)
     else categories.add(category)
-    onChange({ ...state, categories })
+    onControlsChange({ ...controls, categories })
   }
 
   const toggleInstallForm = (form: InstallForm): void => {
-    const installForms = new Set(state.installForms)
+    const installForms = new Set(controls.installForms)
     if (installForms.has(form)) installForms.delete(form)
     else installForms.add(form)
-    onChange({ ...state, installForms })
+    onControlsChange({ ...controls, installForms })
   }
 
   return (
@@ -67,10 +76,10 @@ export function FilterBar({ state, lang, t, onChange }: FilterBarProps): ReactNo
         className={css.search}
         type="search"
         data-search
-        value={state.query}
+        value={query}
         placeholder={t('searchPlaceholder')}
         aria-label={t('searchPlaceholder')}
-        onChange={event => onChange({ ...state, query: event.target.value })}
+        onChange={event => onQueryChange(event.target.value)}
       />
       <div className={css.row}>
         <span className={css.rowLabel}>{t('filterCategory')}</span>
@@ -81,7 +90,7 @@ export function FilterBar({ state, lang, t, onChange }: FilterBarProps): ReactNo
               type="button"
               className={css.chip}
               data-category-chip={category}
-              aria-pressed={state.categories.has(category)}
+              aria-pressed={controls.categories.has(category)}
               onClick={() => toggleCategory(category)}
             >
               {CATEGORY_LABEL[category][lang]}
@@ -98,7 +107,7 @@ export function FilterBar({ state, lang, t, onChange }: FilterBarProps): ReactNo
               type="button"
               className={css.chip}
               data-form-chip={form}
-              aria-pressed={state.installForms.has(form)}
+              aria-pressed={controls.installForms.has(form)}
               onClick={() => toggleInstallForm(form)}
             >
               {INSTALL_FORM_LABEL[form][lang]}
@@ -115,8 +124,8 @@ export function FilterBar({ state, lang, t, onChange }: FilterBarProps): ReactNo
               type="button"
               className={css.chip}
               data-group-by={groupBy}
-              aria-pressed={state.groupBy === groupBy}
-              onClick={() => onChange({ ...state, groupBy })}
+              aria-pressed={controls.groupBy === groupBy}
+              onClick={() => onControlsChange({ ...controls, groupBy })}
             >
               {t(GROUP_BY_LABEL[groupBy])}
             </button>
@@ -132,8 +141,8 @@ export function FilterBar({ state, lang, t, onChange }: FilterBarProps): ReactNo
               type="button"
               className={css.chip}
               data-sort={sort}
-              aria-pressed={state.sort === sort}
-              onClick={() => onChange({ ...state, sort })}
+              aria-pressed={controls.sort === sort}
+              onClick={() => onControlsChange({ ...controls, sort })}
             >
               {t(SORT_LABEL[sort])}
             </button>

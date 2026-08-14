@@ -56,8 +56,8 @@ function pluginFixture(overrides: Partial<PluginEntry> = {}): PluginEntry {
 
 describe('FilterBar', () => {
   const baseProps = (overrides: Partial<FilterBarProps> = {}): FilterBarProps => ({
-    state: {
-      query: '',
+    query: '',
+    controls: {
       categories: new Set(),
       installForms: new Set(),
       groupBy: 'category',
@@ -65,61 +65,64 @@ describe('FilterBar', () => {
     },
     lang: 'zh',
     t: makeT(zh),
-    onChange: vi.fn(),
+    onQueryChange: vi.fn(),
+    onControlsChange: vi.fn(),
     ...overrides,
   })
 
-  it('fires onChange with the new query when the search box changes', () => {
-    const onChange = vi.fn()
-    render(<FilterBar {...baseProps({ onChange })} />)
+  it('fires onQueryChange with the new query when the search box changes', () => {
+    const onQueryChange = vi.fn()
+    render(<FilterBar {...baseProps({ onQueryChange })} />)
     fireEvent.change(screen.getByPlaceholderText(zh.searchPlaceholder), { target: { value: 'vision' } })
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ query: 'vision' }))
+    expect(onQueryChange).toHaveBeenCalledWith('vision')
   })
 
   it('toggles a category chip on and off, reporting the updated set each time', () => {
-    const onChange = vi.fn()
-    const initial = baseProps().state
+    const onControlsChange = vi.fn()
+    const initial = baseProps().controls
     function Harness() {
-      const [state, setState] = useState(initial)
+      const [controls, setControls] = useState(initial)
       return (
         <FilterBar
-          state={state}
+          query=""
           lang="zh"
           t={makeT(zh)}
-          onChange={next => { onChange(next); setState(next) }}
+          controls={controls}
+          onQueryChange={() => {}}
+          onControlsChange={next => { onControlsChange(next); setControls(next) }}
         />
       )
     }
     render(<Harness />)
     const chip = screen.getByRole('button', { name: CATEGORY_LABEL.vision.zh })
     fireEvent.click(chip)
-    const selected = onChange.mock.calls[0]?.[0] as FilterBarProps['state'] | undefined
+    const selected = onControlsChange.mock.calls[0]?.[0] as FilterBarProps['controls'] | undefined
     expect(selected?.categories.has('vision')).toBe(true)
     fireEvent.click(chip)
-    const deselected = onChange.mock.calls[1]?.[0] as FilterBarProps['state'] | undefined
+    const deselected = onControlsChange.mock.calls[1]?.[0] as FilterBarProps['controls'] | undefined
     expect(deselected?.categories.has('vision')).toBe(false)
   })
 
   it('toggles an install-form chip and reports the updated set', () => {
-    const onChange = vi.fn()
-    render(<FilterBar {...baseProps({ onChange })} />)
+    const onControlsChange = vi.fn()
+    render(<FilterBar {...baseProps({ onControlsChange })} />)
     fireEvent.click(screen.getByRole('button', { name: INSTALL_FORM_LABEL.repo.zh }))
-    const next = onChange.mock.calls[0]?.[0] as FilterBarProps['state'] | undefined
+    const next = onControlsChange.mock.calls[0]?.[0] as FilterBarProps['controls'] | undefined
     expect(next?.installForms.has('repo')).toBe(true)
   })
 
   it('switches the group-by dimension', () => {
-    const onChange = vi.fn()
-    render(<FilterBar {...baseProps({ onChange })} />)
+    const onControlsChange = vi.fn()
+    render(<FilterBar {...baseProps({ onControlsChange })} />)
     fireEvent.click(screen.getByRole('button', { name: zh.groupByLanguage }))
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ groupBy: 'language' }))
+    expect(onControlsChange).toHaveBeenCalledWith(expect.objectContaining({ groupBy: 'language' }))
   })
 
   it('switches the sort key', () => {
-    const onChange = vi.fn()
-    render(<FilterBar {...baseProps({ onChange })} />)
+    const onControlsChange = vi.fn()
+    render(<FilterBar {...baseProps({ onControlsChange })} />)
     fireEvent.click(screen.getByRole('button', { name: zh.sortStars }))
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ sort: 'stars' }))
+    expect(onControlsChange).toHaveBeenCalledWith(expect.objectContaining({ sort: 'stars' }))
   })
 
   it('renders English labels symmetrically', () => {
@@ -133,27 +136,27 @@ describe('FilterBar', () => {
 
 describe('DirectoryTab filter wiring', () => {
   const plugins: PluginEntry[] = [
-    pluginFixture({ id: 'a/vision', name: 'VisionLens', category: 'vision' }),
-    pluginFixture({ id: 'b/tool', name: 'Toolbox', category: 'tool', install: { form: 'bundle', command: null, source: 'derived' } }),
-    pluginFixture({ id: 'c/mcp', name: 'McpHub', category: 'mcp' }),
+    pluginFixture({ id: 'a/vision', name: 'VisionLens', category: 'vision', stars: 30 }),
+    pluginFixture({ id: 'b/tool', name: 'Toolbox', category: 'tool', stars: 20, install: { form: 'bundle', command: null, source: 'derived' } }),
+    pluginFixture({ id: 'c/mcp', name: 'McpHub', category: 'mcp', stars: 10 }),
   ]
 
-  it('shows the visibleCount line and grouped placeholders with localized labels + counts', async () => {
+  it('renders all cards in the default star-desc order', async () => {
     const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} />)
-    expect(await screen.findByText(zh.visibleCount.replace('{count}', '3'))).toBeTruthy()
-    const vision = view.container.querySelector('[data-group="vision"]')
-    expect(vision?.querySelector('[data-group-label]')?.textContent).toBe(CATEGORY_LABEL.vision.zh)
-    expect(vision?.querySelector('[data-group-count]')?.textContent).toBe('1')
-    const groups = [...view.container.querySelectorAll('[data-group]')]
-    expect(groups.map(el => el.getAttribute('data-group'))).toEqual(['tool', 'vision', 'mcp'])
+    await screen.findByText('VisionLens')
+    const names = [...view.container.querySelectorAll('[data-plugin-card] [data-owner-link]')]
+      .map(el => el.textContent)
+    expect(names).toEqual(['VisionLens', 'Toolbox', 'McpHub'])
   })
 
-  it('narrows the groups and visible count when the search box changes', async () => {
+  it('narrows the listing when the search box changes (debounced)', async () => {
     const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} />)
-    await screen.findByText(zh.visibleCount.replace('{count}', '3'))
+    await screen.findByText('VisionLens')
     fireEvent.change(screen.getByPlaceholderText(zh.searchPlaceholder), { target: { value: 'vision' } })
-    expect(screen.getByText(zh.visibleCount.replace('{count}', '1'))).toBeTruthy()
-    const groups = [...view.container.querySelectorAll('[data-group]')]
-    expect(groups.map(el => el.getAttribute('data-group'))).toEqual(['vision'])
+    // The query is debounced; the narrowed result arrives a beat later.
+    await screen.findByText(zh.visibleCount.replace('{count}', '1'), {}, { timeout: 2000 })
+    const cards = [...view.container.querySelectorAll('[data-plugin-card]')]
+    expect(cards).toHaveLength(1)
+    expect(cards[0]?.querySelector('[data-owner-link]')?.textContent).toBe('VisionLens')
   })
 })
