@@ -106,8 +106,11 @@ guessed install button.
   jsDelivr (`https://cdn.jsdelivr.net/gh/<owner>/dsh-plugin-directory@main/data`);
   if it succeeds it replaces the bundled snapshot and shows the last sync
   date, and if it fails (offline) it silently keeps the bundled snapshot.
-  Replace `<owner>` in `src/client/data.ts` with the real owner once the repo
-  is published; jsDelivr serves GitHub files with `Access-Control-Allow-Origin: *`.
+  `<owner>` is the GitHub account/org that hosts the `dsh-plugin-directory`
+  repository — the **plugin author's account, a single fixed value** baked in
+  at build time (not per-installer); every installer shares the same canonical
+  data source. Set it once in `src/client/data.ts` (`CDN_BASE`) before
+  publishing. jsDelivr serves GitHub files with `Access-Control-Allow-Origin: *`.
 - **Live search** — typing a query also queries the GitHub Search API for
   `topic:dsh-plugin` repositories matching the query (debounced, 20 results),
   and appends them as a **Live results** section (deduped against the
