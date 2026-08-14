@@ -1,0 +1,7 @@
+node_modules/
+.pnpm-store/
+lib/
+dist/
+coverage/
+.superpowers/
+data/.inspect-cache.json

@@ -1,0 +1,6 @@
+# dsh-plugin-directory bundle patch: registers the plugin directory client
+# package into the composed entry list. Applied as one insert over the
+# profile root; see docs/plan.md.
+- insert:
+    - id: dsh-plugin-directory
+      name: dsh-plugin-directory
