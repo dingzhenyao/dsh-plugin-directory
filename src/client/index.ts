@@ -3,10 +3,11 @@
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import { DirectoryTab } from './DirectoryTab.tsx'
+import { DirectoryTab, type DirectoryTabInjected } from './DirectoryTab.tsx'
+import { meta, plugins } from './data.ts'
 import { en, zh, type DirectoryLocaleKey } from './locales.ts'
 
-export type { DirectoryTabProps } from './DirectoryTab.tsx'
+export type { DirectoryTabInjected, DirectoryTabProps } from './DirectoryTab.tsx'
 export type { DirectoryLocaleKey } from './locales.ts'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
@@ -27,11 +28,20 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-plugin-directory: dictionaries')
 
   const t = ctx.locale.bind(NS)
+  // The snapshot is bundled at build time; the face is re-read on every
+  // render so the active locale and latest data both stay current.
+  const injected = (): DirectoryTabInjected => ({
+    lang: ctx.locale.getLocale().active,
+    plugins,
+    meta,
+  })
+
   ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
     name: 'settings.plugins.tab',
     id: 'directory',
     order: 20,
     label: () => t('tab'),
     locale: NS,
+    inject: injected,
   }, DirectoryTab))
 }
