@@ -192,11 +192,16 @@ export async function runSync(client: GithubClient, opts: SyncOptions): Promise<
     const readme = await client.fetchReadme(item.entry.id, ref)
     const hasReadme = readme !== null
     let install = installFromReadme(readme ?? '', item.entry.id, form)
-    if (install.source !== 'readme') {
-      // README has no install command: fall back to package.json derivation
-      // (keeps the npm package name in the command for bundle/client forms).
-      install = installFromPackageJson(pkg ?? {}, item.entry.id)
+    if (install.source !== 'readme' && (form === 'bundle' || form === 'client') && pkg?.name) {
+      // README has no install command but package.json decides the form:
+      // re-derive from package.json so the npm package name lands in the
+      // command (installFromReadme's own no-command fallback would otherwise
+      // keep the same bundle/client form but emit `github:<id>`).
+      install = installFromPackageJson(pkg, item.entry.id)
     }
+    // Otherwise keep the form-preserving fallback from installFromReadme:
+    // for `repo` it derives `dsh plugin add github:<id>&path:/.dsh-plugin`,
+    // and for `unknown` `dsh plugin add github:<id>`.
 
     item.entry.install = install
     item.hasReadme = hasReadme

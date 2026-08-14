@@ -245,6 +245,35 @@ describe('runSync', () => {
     expect(client.hasDsPluginDir).not.toHaveBeenCalled()
   })
 
+  it('preserves repo install form when the only signal is a .dsh-plugin dir', async () => {
+    const dir = await makeOutDir()
+    const fixture = makeFixture()
+    const repo = baseRepo({
+      full_name: 'carol/repo-plugin',
+      name: 'repo-plugin',
+      owner: 'carol',
+      html_url: 'https://github.com/carol/repo-plugin',
+      description: 'A plugin delivered as a repo directory',
+      topics: ['dsh-plugin'],
+      language: 'Shell',
+      pushed_at: '2025-05-01T00:00:00.000Z',
+    })
+    fixture.repos = [repo]
+    // No `dsh` keys in package.json, README has no `dsh plugin add` command:
+    // the `.dsh-plugin` dir is the only install signal.
+    fixture.pkg = { 'carol/repo-plugin': { name: 'repo-plugin' } }
+    fixture.readme = { 'carol/repo-plugin': 'Docs only.\nNo install command here.\n' }
+    fixture.hasDir = { 'carol/repo-plugin': true }
+    await runSync(makeClient(fixture), { outDir: dir })
+
+    const plugins = await readJson<PluginEntry[]>(dir, 'plugins.json')
+    expect(plugins).toHaveLength(1)
+    const p = plugins[0]!
+    expect(p.install.form).toBe('repo')
+    expect(p.install.command).toContain('&path:/.dsh-plugin')
+    expect(p.install.command).toBe('dsh plugin add github:carol/repo-plugin&path:/.dsh-plugin')
+  })
+
   it('reuses the cache on a second run with unchanged pushedAt (no re-fetch)', async () => {
     const dir = await makeOutDir()
     const first = makeClient(makeFixture())

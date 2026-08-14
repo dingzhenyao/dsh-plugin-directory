@@ -104,7 +104,13 @@ export function createGithubClient(): GithubClient {
           `/search/repositories?q=topic:dsh-plugin&per_page=${SEARCH_PAGE_SIZE}&page=${page}`,
           token,
         )
-        if (!res.ok) break
+        if (!res.ok) {
+          // The first page must fail loud: a 401 (bad token) or 403 (rate
+          // limit) would otherwise silently produce an empty/partial catalog.
+          // On later pages a non-OK just stops pagination (partial progress).
+          if (page === 1) throw new Error(`GitHub search failed: ${res.status}`)
+          break
+        }
         const body = (await res.json()) as SearchResponse
         const items = body.items ?? []
         for (const item of items) {
