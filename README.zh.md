@@ -31,6 +31,12 @@ dsh plugin --profile <profile-name> add ./dsh-plugin-directory
 
 安装后打开 DSH Web GUI，进入「设置 → 插件 → 插件目录」即可查看。
 
+### 版本兼容
+
+本插件兼容 DeepSeek Harness `0.1.0-rc.5`（源码 checkout）与 `0.1.0-rc.6`（npm）。
+客户端 peer 依赖声明为 `>=0.1.0-rc.5 <0.2.0`，因此本地 `pnpm dsh` 源码运行和
+npm 安装的 `dsh` 都能满足。
+
 ## 使用
 
 该 tab 基于打包进客户端的 `dsh-plugin` topic 数据快照，完全在浏览器端运行：

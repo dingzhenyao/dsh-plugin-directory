@@ -34,6 +34,12 @@ dsh plugin --profile <profile-name> add ./dsh-plugin-directory
 After installation, open the DSH Web GUI and go to **Settings → Plugins → 插件目录
 (Plugin directory)**.
 
+### Compatibility
+
+The plugin works with DeepSeek Harness `0.1.0-rc.5` (source checkout) and
+`0.1.0-rc.6` (npm). Its client peer dependencies accept `>=0.1.0-rc.5 <0.2.0`,
+so both a local `pnpm dsh` checkout and an npm-installed `dsh` satisfy them.
+
 ## Usage
 
 The tab is a full client-side directory over a bundled snapshot of the
