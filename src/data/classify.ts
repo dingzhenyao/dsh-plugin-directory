@@ -20,16 +20,15 @@ const CATEGORY_KEYWORDS: ReadonlyArray<readonly [FunctionCategory, readonly stri
 
 /**
  * Classify a repo into a `FunctionCategory`. `overrides` is keyed by the
- * `owner/repo` id and wins over keyword hits; the fixed signature has no
- * separate id field, so callers pass the id as `input.name`. With no override
- * and no keyword hit the result is `'other'`.
+ * `owner/repo` id and wins over keyword hits; keyword matching runs over
+ * `name + description + topics` only — `id` is never keyword-matched. With no
+ * override and no keyword hit the result is `'other'`.
  */
 export function classifyRepo(
-  input: { name: string; description: string | null; topics: string[] },
+  input: { id: string; name: string; description: string | null; topics: string[] },
   overrides: Record<string, FunctionCategory>,
 ): FunctionCategory {
-  const override = overrides[input.name]
-  if (override) return override
+  if (Object.hasOwn(overrides, input.id)) return overrides[input.id]!
 
   const text = [input.name, input.description ?? '', ...input.topics].join(' ').toLowerCase()
   for (const [category, keywords] of CATEGORY_KEYWORDS) {

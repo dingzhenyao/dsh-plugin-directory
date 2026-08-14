@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { classifyRepo } from '../../src/data/classify.ts'
 import type { FunctionCategory } from '../../src/data/types.ts'
 
-function input(partial: Partial<{ name: string; description: string | null; topics: string[] }> = {}) {
-  return { name: 'some-repo', description: null, topics: [] as string[], ...partial }
+function input(partial: Partial<{ id: string; name: string; description: string | null; topics: string[] }> = {}) {
+  return { id: 'owner/some-repo', name: 'some-repo', description: null, topics: [] as string[], ...partial }
 }
 
 describe('classifyRepo', () => {
@@ -11,10 +11,24 @@ describe('classifyRepo', () => {
     const overrides: Record<string, FunctionCategory> = { 'octocat/hello-world': 'memory' }
     expect(
       classifyRepo(
-        input({ name: 'octocat/hello-world', description: 'an ocr screenshot tool', topics: ['vision'] }),
+        input({ id: 'octocat/hello-world', name: 'hello-world', description: 'an ocr screenshot tool', topics: ['vision'] }),
         overrides,
       ),
     ).toBe('memory')
+  })
+
+  it('override is resolved against the id, not the name', () => {
+    const overrides: Record<string, FunctionCategory> = { 'octocat/hello-world': 'memory' }
+    expect(
+      classifyRepo(
+        input({ id: 'octocat/hello-world', name: 'completely-unrelated-name', description: null, topics: [] }),
+        overrides,
+      ),
+    ).toBe('memory')
+  })
+
+  it('keyword matching uses the name, not the id', () => {
+    expect(classifyRepo(input({ id: 'owner/search-tools', name: 'modlens' }), {})).toBe('other')
   })
 
   it('hits vision via "ocr" (case-insensitive)', () => {
