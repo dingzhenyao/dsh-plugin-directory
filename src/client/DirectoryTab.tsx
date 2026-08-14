@@ -4,6 +4,7 @@ import type { MetaFile, PluginEntry } from '../data/types.ts'
 import css from './DirectoryTab.module.css'
 import { StatsDashboard } from './StatsDashboard.tsx'
 import { FilterBar } from './FilterBar.tsx'
+import { PluginCard } from './PluginCard.tsx'
 import { filterAndSort, type FilterState } from './filter.ts'
 
 /** Registration-side inject face: the bundled bilingual snapshot. */
@@ -89,6 +90,11 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                     <span data-group-label>{group.label}</span>
                     <span className={css.groupCount} data-group-count>{group.entries.length}</span>
                   </h3>
+                  <div className={css.cardList}>
+                    {group.entries.map(entry => (
+                      <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
+                    ))}
+                  </div>
                 </section>
               ))}
               <StatsDashboard meta={meta} lang={lang} t={t} />
