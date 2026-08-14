@@ -403,11 +403,11 @@ export interface ScoreInput {
 - Produces:
 ```ts
 export function classifyRepo(
-  input: { name: string; description: string | null; topics: string[] },
+  input: { id: string; name: string; description: string | null; topics: string[] },
   overrides: Record<string, FunctionCategory>,
 ): FunctionCategory
 ```
-- 语义：`overrides`（key 为 `owner/repo` id）优先；否则对 `name+description+topics` 小写文本做关键词命中（类别→关键词表见计划 §8），首个命中即返回；无命中返回 `'other'`。
+- 语义：`overrides`（key 为 `owner/repo` id）优先（用 `Object.hasOwn(overrides, input.id)` 查 id）；否则对 `name+description+topics` 小写文本做关键词命中（类别→关键词表见计划 §8），首个命中即返回；无命中返回 `'other'`。
 
 - [ ] **Step 1:** 写失败测试：`overrides` 命中优先；`vision`（含 `ocr`）、`memory`（含 `recall`）、`mcp`（含 `model context protocol`）、`ui-skin`（含 `皮肤`）、`cli-tui`（含 `tui`）各命中一例；无关键词→`other`；大小写不敏感。
 - [ ] **Step 2:** 运行确认失败。**Step 3:** 实现关键词表与匹配。**Step 4:** 运行确认通过。**Step 5:** Commit `feat: function-category classification`。
