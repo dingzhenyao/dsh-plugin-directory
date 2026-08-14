@@ -90,4 +90,18 @@ describe('installFromReadme', () => {
     expect(info.command).toBe('dsh plugin add github:a/b')
     expect(info.source).toBe('derived')
   })
+
+  it('ignores prose that merely mentions `dsh plugin add` and falls back to derived', () => {
+    const prose =
+      'This list collects community plugins that are installable via `dsh plugin add` (each declares a `dsh.bundle` manifest).'
+    const info = installFromReadme(prose, 'a/b', 'unknown')
+    expect(info.source).toBe('derived')
+    expect(info.command).toBe('dsh plugin add github:a/b')
+  })
+
+  it('trims quote/punctuation wrapping around a real command', () => {
+    const info = installFromReadme('Install with `dsh plugin add @scope/pkg`.', 'a/b', 'client')
+    expect(info.command).toBe('dsh plugin add @scope/pkg')
+    expect(info.source).toBe('readme')
+  })
 })

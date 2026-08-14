@@ -1,0 +1,58 @@
+# Nightly plugin-data sync.
+#
+# Runs the `dsh-plugin` topic seed (`pnpm sync`) and commits the resulting
+# data/ snapshot back to the default branch when anything changed. The sync
+# reads GITHUB_TOKEN (injected below) to stay well inside the GitHub API rate
+# limits; unauthenticated it would exhaust search/core quota quickly.
+name: sync-data
+
+on:
+  schedule:
+    # Every 6 hours on the default branch.
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      # `allowBuilds.esbuild: true` lives in pnpm-workspace.yaml, so a frozen
+      # install succeeds without the ERR_PNPM_IGNORED_BUILDS gate.
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync plugin data
+        run: pnpm sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit and push data changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$(git status --porcelain data/)" ]; then
+            echo "No data changes; nothing to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/
+            git commit -m "chore: refresh plugin data snapshot"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

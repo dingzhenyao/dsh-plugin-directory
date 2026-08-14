@@ -44,20 +44,42 @@ export function installFromPackageJson(pkg: PackageManifest, id: string): Instal
   return info
 }
 
-/** Matches a `dsh plugin add ...` command up to the end of its line. */
+/** Matches a `dsh plugin add` invocation anywhere in a line. */
 const README_COMMAND_RE = /dsh plugin add[^\r\n]*/
+/** Trailing quote/punctuation that may wrap a command in prose (e.g. "my-plugin`."). */
+const COMMAND_TRAIL_RE = /[`.,;:)\]}>]+$/
 
 /**
- * Install info extracted from a plugin's own README: the first `dsh plugin
- * add ...` line becomes `command` (matched to end of line) with the whole line
- * as `snippet` and source `'readme'`. When the README has no such command,
- * fall back to the derived command for `form` with source `'derived'`.
+ * Extracts a real `dsh plugin add <target>` command from one README line, or
+ * `null` when the line only mentions the command in prose. A real invocation
+ * has exactly one whitespace-free target token (npm package name,
+ * `github:owner/repo`, or path); prose like "via `dsh plugin add` (each
+ * declares ...)" or "dsh plugin add is required" has more than one token and
+ * is rejected so the README scanner does not emit mangled commands.
+ */
+function readmeCommand(line: string): string | null {
+  const match = line.match(README_COMMAND_RE)
+  if (!match?.[0]) return null
+  const rest = match[0].slice('dsh plugin add'.length).trim()
+  if (rest === '') return null
+  const tokens = rest.split(/\s+/)
+  if (tokens.length !== 1) return null
+  const target = tokens[0]?.replace(COMMAND_TRAIL_RE, '')
+  if (!target) return null
+  return `dsh plugin add ${target}`
+}
+
+/**
+ * Install info extracted from a plugin's own README: the first real `dsh
+ * plugin add <target>` line becomes `command` with the whole line as `snippet`
+ * and source `'readme'`. When the README has no such command, fall back to the
+ * derived command for `form` with source `'derived'`.
  */
 export function installFromReadme(readme: string, id: string, form: InstallForm): InstallInfo {
   for (const line of readme.split(/\r?\n/)) {
-    const match = line.match(README_COMMAND_RE)
-    if (match?.[0]) {
-      return { form, command: match[0], source: 'readme', snippet: line }
+    const command = readmeCommand(line)
+    if (command !== null) {
+      return { form, command, source: 'readme', snippet: line }
     }
   }
   return { form, command: derivedCommand(form, id), source: 'derived' }
