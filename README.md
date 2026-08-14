@@ -22,7 +22,7 @@ dsh plugin add dsh-plugin-directory
 **git** (when published under a GitHub org/user)
 
 ```sh
-dsh plugin add github:<owner>/dsh-plugin-directory
+dsh plugin add github:dingzhenyao/dsh-plugin-directory
 ```
 
 **manual / local checkout**
@@ -103,14 +103,13 @@ guessed install button.
 ## Runtime data refresh & live search
 
 - **CDN refresh** — on open, the tab fetches the latest snapshot from
-  jsDelivr (`https://cdn.jsdelivr.net/gh/<owner>/dsh-plugin-directory@main/data`);
+  jsDelivr (`https://cdn.jsdelivr.net/gh/dingzhenyao/dsh-plugin-directory@main/data`);
   if it succeeds it replaces the bundled snapshot and shows the last sync
   date, and if it fails (offline) it silently keeps the bundled snapshot.
-  `<owner>` is the GitHub account/org that hosts the `dsh-plugin-directory`
-  repository — the **plugin author's account, a single fixed value** baked in
-  at build time (not per-installer); every installer shares the same canonical
-  data source. Set it once in `src/client/data.ts` (`CDN_BASE`) before
-  publishing. jsDelivr serves GitHub files with `Access-Control-Allow-Origin: *`.
+  The owner (`dingzhenyao`) is the GitHub account hosting the
+  `dsh-plugin-directory` repository — a single fixed value baked in at build
+  time, shared by every installer (not per-installer). jsDelivr serves GitHub
+  files with `Access-Control-Allow-Origin: *`.
 - **Live search** — typing a query also queries the GitHub Search API for
   `topic:dsh-plugin` repositories matching the query (debounced, 20 results),
   and appends them as a **Live results** section (deduped against the
@@ -148,9 +147,10 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   search API from the browser (unauthenticated, 10 requests/minute); it is
   debounced and degrades to local results on rate-limit. The sync pipeline
   uses `GITHUB_TOKEN` in CI (see `.github/workflows/sync.yml`).
-- **`<owner>` placeholder** — the CDN URL and git-install line use `<owner>`
-  until the repository is published; replace it in `src/client/data.ts` and
-  the install instructions.
+- **CDN requires the repo to be published** — the CDN refresh and git-install
+  line point at `github.com/dingzhenyao/dsh-plugin-directory`; until that
+  repository exists (pushed to GitHub), the tab silently falls back to the
+  bundled snapshot. Change `src/client/data.ts` (`CDN_BASE`) if the repo moves.
 
 ## License
 

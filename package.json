@@ -11,10 +11,10 @@
     "dsh-plugin"
   ],
   "license": "MIT",
-  "homepage": "https://github.com/<owner>/dsh-plugin-directory",
+  "homepage": "https://github.com/dingzhenyao/dsh-plugin-directory",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/<owner>/dsh-plugin-directory.git"
+    "url": "git+https://github.com/dingzhenyao/dsh-plugin-directory.git"
   },
   "type": "module",
   "main": "lib/index.js",

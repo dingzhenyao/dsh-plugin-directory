@@ -20,7 +20,7 @@ dsh plugin add dsh-plugin-directory
 **git**（发布到 GitHub 组织/用户下后）
 
 ```sh
-dsh plugin add github:<owner>/dsh-plugin-directory
+dsh plugin add github:dingzhenyao/dsh-plugin-directory
 ```
 
 **手动 / 本地目录**
@@ -85,12 +85,11 @@ npm 安装的 `dsh` 都能满足。
 ## 运行时刷新与实时搜索
 
 - **CDN 刷新** — 打开时，tab 从 jsDelivr 拉取最新快照
-  （`https://cdn.jsdelivr.net/gh/<owner>/dsh-plugin-directory@main/data`）；
+  （`https://cdn.jsdelivr.net/gh/dingzhenyao/dsh-plugin-directory@main/data`）；
   成功则替换内置快照并显示上次同步日期，失败（离线）则静默保留内置快照。
-  `<owner>` 是托管 `dsh-plugin-directory` 仓库的 **GitHub 账户/组织名**，即
-  **插件作者的账户、单一固定值**，在构建时写入（不是每个安装者各自的账户），
-  所有安装者共用同一个规范数据源。发布前在 `src/client/data.ts`（`CDN_BASE`）
-  中一次性填好。jsDelivr 对 GitHub 文件返回 `Access-Control-Allow-Origin: *`。
+  owner（`dingzhenyao`）是托管 `dsh-plugin-directory` 仓库的 GitHub 账户名，
+  为**单一固定值**、构建时写入、所有安装者共用（非每用户各自账户）。jsDelivr
+  对 GitHub 文件返回 `Access-Control-Allow-Origin: *`。
 - **实时搜索** — 输入搜索词时同时向 GitHub Search API 查询 `topic:dsh-plugin`
   匹配仓库（防抖、20 条），去重后以「实时结果」区块追加展示。实时结果无 README
   检测，因此不显示安装按钮；限流/失败时降级为仅本地结果并给出提示。
@@ -122,8 +121,9 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
 - **未认证搜索限额** — 实时搜索从浏览器直连 GitHub 搜索 API（未认证，10 次/分），
   已做防抖，限流时降级为本地结果；同步管线在 CI 中带 `GITHUB_TOKEN`（见
   `.github/workflows/sync.yml`）。
-- **`<owner>` 占位** — CDN 地址与 git 安装行在仓库发布前使用 `<owner>` 占位；
-  发布后替换 `src/client/data.ts` 与安装说明中的占位符。
+- **CDN 需仓库已发布** — CDN 刷新与 git 安装行指向
+  `github.com/dingzhenyao/dsh-plugin-directory`；在该仓库尚未推送至 GitHub 前，
+  tab 会静默回退到内置快照。若仓库迁移，改 `src/client/data.ts`（`CDN_BASE`）。
 
 ## License
 

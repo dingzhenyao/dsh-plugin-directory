@@ -21,11 +21,11 @@ export const FALLBACK: Snapshot = {
 
 /**
  * CDN base for the jsDelivr-hosted snapshot. `data/plugins.json` and
- * `data/meta.json` live beside each other under this path. Replace `<owner>`
- * with the real repository owner once the plugin is published to GitHub; the
- * value is a constant so no runtime configuration is required for v2.
+ * `data/meta.json` live beside each other under this path. The owner is the
+ * plugin author's GitHub account (a single fixed value shared by all
+ * installers), baked in at build time.
  */
-export const CDN_BASE = 'https://cdn.jsdelivr.net/gh/<owner>/dsh-plugin-directory@main/data'
+export const CDN_BASE = 'https://cdn.jsdelivr.net/gh/dingzhenyao/dsh-plugin-directory@main/data'
 
 /** Thrown when a CDN snapshot was fetched but fails the shape check. */
 const MALFORMED = 'remote snapshot is malformed'
