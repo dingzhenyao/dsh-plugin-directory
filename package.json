@@ -2,6 +2,20 @@
   "name": "dsh-plugin-directory",
   "description": "Browsable, searchable, stats-driven directory of GitHub DSH plugin repositories, rendered inside the DSH Web GUI settings.",
   "version": "0.1.0-rc.1",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "directory",
+    "plugin-directory",
+    "dsh-plugin"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/<owner>/dsh-plugin-directory",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/<owner>/dsh-plugin-directory.git"
+  },
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -29,7 +43,6 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "license": "MIT",
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
     "@deepseek-ai/dsh-client-locale": "^0.1.0-rc.6",
