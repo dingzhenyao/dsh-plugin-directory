@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import css from './DirectoryTab.module.css'
+import { StatsDashboard } from './StatsDashboard.tsx'
 
 /** Registration-side inject face: the bundled bilingual snapshot. */
 export interface DirectoryTabInjected {
@@ -63,7 +64,12 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
       {state.status === 'ready' ? (
         state.count === 0
           ? <p className={css.status}>{t('empty')}</p>
-          : <p className={css.status}>{t('repoCount', { count: String(state.count) })}</p>
+          : (
+            <>
+              <p className={css.status}>{t('repoCount', { count: String(state.count) })}</p>
+              <StatsDashboard meta={meta} lang={lang} t={t} />
+            </>
+          )
       ) : null}
     </div>
   )
