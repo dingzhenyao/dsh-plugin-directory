@@ -3,6 +3,8 @@ import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import css from './DirectoryTab.module.css'
 import { StatsDashboard } from './StatsDashboard.tsx'
+import { FilterBar } from './FilterBar.tsx'
+import { filterAndSort, type FilterState } from './filter.ts'
 
 /** Registration-side inject face: the bundled bilingual snapshot. */
 export interface DirectoryTabInjected {
@@ -28,6 +30,13 @@ type ViewState =
 export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): ReactNode {
   const [state, setState] = useState<ViewState>({ status: 'loading' })
   const [request, setRequest] = useState(0)
+  const [filter, setFilter] = useState<FilterState>(() => ({
+    query: '',
+    categories: new Set(),
+    installForms: new Set(),
+    groupBy: 'category',
+    sort: 'score',
+  }))
 
   useEffect(() => {
     let current = true
@@ -52,6 +61,11 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
     setRequest(value => value + 1)
   }
 
+  // Filtered grouping of the injected snapshot for the current controls; the
+  // Array.isArray guard keeps a malformed payload from crashing this seat
+  // before the effect lands on the error state.
+  const { groups, visible } = filterAndSort(Array.isArray(plugins) ? plugins : [], filter, lang)
+
   return (
     <div className={css.root} data-directory lang={lang} aria-busy={state.status === 'loading'}>
       {state.status === 'loading' ? <p className={css.status}>{t('loading')}</p> : null}
@@ -67,6 +81,16 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
           : (
             <>
               <p className={css.status}>{t('repoCount', { count: String(state.count) })}</p>
+              <FilterBar state={filter} lang={lang} t={t} onChange={setFilter} />
+              <p className={css.status}>{t('visibleCount', { count: String(visible) })}</p>
+              {groups.map(group => (
+                <section key={group.key} className={css.group} data-group={group.key}>
+                  <h3 className={css.groupTitle}>
+                    <span data-group-label>{group.label}</span>
+                    <span className={css.groupCount} data-group-count>{group.entries.length}</span>
+                  </h3>
+                </section>
+              ))}
               <StatsDashboard meta={meta} lang={lang} t={t} />
             </>
           )
