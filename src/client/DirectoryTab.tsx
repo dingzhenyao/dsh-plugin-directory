@@ -207,33 +207,35 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                 {t('visibleCount', { count: String(visible) })}
                 {!isFiltering && !showAll ? ` · ${t('topBanner', { count: String(TOP_N) })}` : ''}
               </p>
-              <div className={css.cardList}>
-                {pageEntries.map(entry => (
-                  <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
-                ))}
+              <div className={css.results} data-results>
+                <div className={css.cardList}>
+                  {pageEntries.map(entry => (
+                    <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
+                  ))}
+                </div>
+                {pageEntries.length === 0 ? <p className={css.status}>{t('empty')}</p> : null}
+                <nav className={css.pager} aria-label={t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}>
+                  <button
+                    type="button"
+                    className={css.pageButton}
+                    disabled={safePage === 0}
+                    onClick={() => setPage(value => Math.max(0, value - 1))}
+                  >
+                    {t('prev')}
+                  </button>
+                  <span className={css.pageIndicator} data-page-indicator>
+                    {t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}
+                  </span>
+                  <button
+                    type="button"
+                    className={css.pageButton}
+                    disabled={safePage >= totalPages - 1}
+                    onClick={() => setPage(value => Math.min(totalPages - 1, value + 1))}
+                  >
+                    {t('next')}
+                  </button>
+                </nav>
               </div>
-              {pageEntries.length === 0 ? <p className={css.status}>{t('empty')}</p> : null}
-              <nav className={css.pager} aria-label={t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}>
-                <button
-                  type="button"
-                  className={css.pageButton}
-                  disabled={safePage === 0}
-                  onClick={() => setPage(value => Math.max(0, value - 1))}
-                >
-                  {t('prev')}
-                </button>
-                <span className={css.pageIndicator} data-page-indicator>
-                  {t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}
-                </span>
-                <button
-                  type="button"
-                  className={css.pageButton}
-                  disabled={safePage >= totalPages - 1}
-                  onClick={() => setPage(value => Math.min(totalPages - 1, value + 1))}
-                >
-                  {t('next')}
-                </button>
-              </nav>
               {!isFiltering && !showAll ? (
                 <button type="button" className={css.browseAll} onClick={() => setShowAll(true)}>
                   {t('browseAll', { count: String(flat.length) })}

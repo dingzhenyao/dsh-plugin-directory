@@ -19,7 +19,7 @@
   font: inherit;
   font-size: 13px;
   line-height: 20px;
-  transition: border-color 0.16s ease;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .search::placeholder {
@@ -53,10 +53,11 @@
 }
 
 .chip {
+  appearance: none;
   border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 999px;
-  padding: 2px 11px;
-  background: transparent;
+  padding: 3px 12px;
+  background: var(--dsw-alias-bg-module-platform);
   color: var(--dsw-alias-label-secondary);
   font: inherit;
   font-size: 12px;
@@ -66,6 +67,7 @@
 }
 
 .chip:hover {
+  border-color: var(--dsw-alias-label-dimmed);
   background: var(--dsw-alias-interactive-bg-hover);
   color: var(--dsw-alias-label-primary);
 }
@@ -79,4 +81,5 @@
   border-color: var(--dsw-alias-brand-primary);
   background: var(--dsw-alias-brand-primary);
   color: var(--dsw-alias-brand-primary-invert);
+  box-shadow: var(--dsw-shadow-lv1);
 }

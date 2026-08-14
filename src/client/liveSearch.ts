@@ -15,7 +15,10 @@ const PER_PAGE = 20
  * and source `derived` — they never surface an install button (see `PluginCard`).
  */
 export async function searchLive(query: string): Promise<PluginEntry[]> {
-  const q = `${query} topic:dsh-plugin`
+  // Require the README to document a `dsh plugin add` install command (via the
+  // `in:readme` qualifier) so high-star "finished software" that merely tags
+  // the `dsh-plugin` topic is excluded — only actual plugins surface.
+  const q = `${query.trim()} "dsh plugin add" in:readme topic:dsh-plugin`
   const res = await fetch(
     `${API_BASE}?q=${encodeURIComponent(q)}&per_page=${PER_PAGE}&sort=stars&order=desc`,
     { headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' } },

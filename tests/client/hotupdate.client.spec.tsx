@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DirectoryTab, type DirectoryTabProps } from '../../src/client/DirectoryTab.tsx'
+import { searchLive } from '../../src/client/liveSearch.ts'
 import { zh, type DirectoryLocaleKey } from '../../src/client/locales.ts'
 import type { MetaFile, PluginEntry } from '../../src/data/types.ts'
 
@@ -103,6 +104,21 @@ describe('live search', () => {
     archived: false,
     fork: false,
   }
+
+  it('scopes live search to README-installable repos via in:readme', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('api.github.com/search')) return jsonResponse({ items: [liveItem] })
+      return { ok: false, json: async () => ({}) } as unknown as Response
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await searchLive('vision')
+    const searchUrl = fetchMock.mock.calls.find(([url]) => String(url).includes('api.github.com/search'))?.[0] as string
+    const decoded = decodeURIComponent(searchUrl)
+    expect(decoded).toContain('in:readme')
+    expect(decoded).toContain('"dsh plugin add"')
+    expect(decoded).toContain('topic:dsh-plugin')
+  })
 
   it('shows live results (deduped against the snapshot) when searching', async () => {
     const fetchMock = vi.fn(async (url: string) => {
