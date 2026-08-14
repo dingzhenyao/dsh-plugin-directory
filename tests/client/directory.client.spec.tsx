@@ -127,6 +127,10 @@ describe('apply registration', () => {
     const injected = (options.inject as () => DirectoryTabInjected)()
     expect(injected.lang).toBe('zh')
     expect(Array.isArray(injected.plugins)).toBe(true)
-    expect(injected.meta).toHaveProperty('total', 1000)
+    // The snapshot size is not fixed (curation drops noise), but the inject
+    // face must be self-consistent: meta.total matches the entry count.
+    expect(typeof injected.meta.total).toBe('number')
+    expect(injected.meta.total).toBeGreaterThan(0)
+    expect(injected.plugins.length).toBe(injected.meta.total)
   })
 })

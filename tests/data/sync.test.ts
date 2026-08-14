@@ -63,7 +63,7 @@ const REPO_B = baseRepo({
   name: 'memory-base',
   owner: 'bob',
   html_url: 'https://github.com/bob/memory-base',
-  description: 'memory recall knowledge base for agents',
+  description: 'memory recall knowledge base for DSH agents',
   topics: ['memory'],
   language: null,
   license: null,
@@ -228,6 +228,38 @@ describe('runSync', () => {
     expect(plugins).toHaveLength(2)
     const meta = await readJson<MetaFile>(dir, 'meta.json')
     expect(meta.total).toBe(2)
+  })
+
+  it('curates: drops empty repos and repos without a DSH signal', async () => {
+    const dir = await makeOutDir()
+    const empty = baseRepo({
+      full_name: 'acme/empty',
+      name: 'empty',
+      description: 'dsh plugin stub',
+      topics: ['dsh-plugin'],
+      pushed_at: null,
+    })
+    const noisy = baseRepo({
+      full_name: 'acme/not-a-plugin',
+      name: 'something-else',
+      description: 'unrelated image uploader',
+      topics: ['images'],
+    })
+    const kept = baseRepo({
+      full_name: 'acme/dsh-tool',
+      name: 'dsh-tool',
+      description: 'a dsh tool',
+      topics: ['dsh-plugin'],
+    })
+    const fixture = makeFixture()
+    fixture.repos = [empty, noisy, kept]
+    fixture.pkg = {}
+    fixture.readme = {}
+    fixture.hasDir = {}
+    await runSync(makeClient(fixture), { outDir: dir, inspectLimit: 0 })
+
+    const plugins = await readJson<PluginEntry[]>(dir, 'plugins.json')
+    expect(plugins.map((p) => p.id)).toEqual(['acme/dsh-tool'])
   })
 
   it('skips deep inspection when inspectLimit <= 0: unknown/derived installs, no inspect calls', async () => {

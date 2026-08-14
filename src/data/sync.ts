@@ -60,6 +60,24 @@ function dedupeByFullName(repos: RawRepo[]): RawRepo[] {
   return out
 }
 
+/**
+ * Aggressive curation signal: a repo is kept only when its name, description,
+ * or topics mention DSH / DeepSeek Harness. The `dsh-plugin` topic is noisy
+ * (many tagged repos are not plugins), so this drops unrelated repos rather
+ * than merely scoring them lower.
+ */
+const DSH_SIGNAL = /\bdsh\b|deepseek[\s-]?harness|deepseek[\s-]?plugin/i
+
+/** A repo that survives curation: pushed (not empty) and DSH-signalled. */
+type CuratedRepo = RawRepo & { pushed_at: string }
+
+function isCuratedRepo(repo: RawRepo): repo is CuratedRepo {
+  // Empty repositories have no commits and report `pushed_at: null`.
+  if (repo.pushed_at === null) return false
+  const text = [repo.name, repo.description ?? '', ...repo.topics].join(' ').toLowerCase()
+  return DSH_SIGNAL.test(text)
+}
+
 /** Preliminary score used to rank inspection targets before deep inspection. */
 function prelimScore(entry: PluginEntry, now: Date): number {
   return scoreRepo(
@@ -130,7 +148,7 @@ export async function runSync(client: GithubClient, opts: SyncOptions): Promise<
   const overrides = opts.overrides ?? {}
   const now = new Date()
 
-  const repos = dedupeByFullName(await client.fetchTopicRepos(token))
+  const repos = dedupeByFullName(await client.fetchTopicRepos(token)).filter(isCuratedRepo)
 
   // Phase 1: map every raw repo to a PluginEntry with a placeholder derived
   // install (form 'unknown', source 'derived') and no readme signal.

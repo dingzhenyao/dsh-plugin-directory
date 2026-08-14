@@ -18,7 +18,7 @@ export interface RawRepo {
   stargazers_count: number
   forks_count: number
   created_at: string
-  pushed_at: string
+  pushed_at: string | null
   archived: boolean
   fork: boolean
   default_branch: string
@@ -54,7 +54,7 @@ interface SearchRepoItem {
   stargazers_count: number
   forks_count: number
   created_at: string
-  pushed_at: string
+  pushed_at: string | null
   archived: boolean
   fork: boolean
   default_branch: string
