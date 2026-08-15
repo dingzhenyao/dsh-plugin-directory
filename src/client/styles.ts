@@ -38,7 +38,15 @@ const CSS = `
 .dshpd-mineList { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .dshpd-mineItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--dsw-alias-border-l2, #d0d5dd); border-radius: 8px; background: var(--dsw-alias-bg-layer-2, #f5f6f8); }
 .dshpd-mineInfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dshpd-mineNameRow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
 .dshpd-mineName { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--dsw-alias-label-primary, #1f2329); }
+.dshpd-statusBadge { border: 1px solid var(--dsw-alias-border-l2, #d0d5dd); border-radius: 999px; padding: 0 8px; background: var(--dsw-alias-bg-module-platform, #f5f6f8); font-size: 11px; line-height: 17px; font-weight: 500; white-space: nowrap; color: var(--dsw-alias-label-secondary, #4b5563); }
+.dshpd-statusBadge[data-install-status='installed'] { border-color: var(--dsw-alias-state-success-primary, #2f9e44); color: var(--dsw-alias-state-success-primary, #2f9e44); }
+.dshpd-statusBadge[data-install-status='not-installed'] { color: var(--dsw-alias-label-tertiary, #8a919f); }
+.dshpd-statusBadge[data-install-status='unknown'] { color: var(--dsw-alias-label-tertiary, #8a919f); }
+.dshpd-statusBadge[data-install-status='disabled'] { border-color: var(--dsw-alias-state-warning-primary, #e8930c); color: var(--dsw-alias-state-warning-primary, #e8930c); }
+.dshpd-statusBadge[data-install-status='failed'] { border-color: var(--dsw-alias-state-error-primary, #d64545); color: var(--dsw-alias-state-error-primary, #d64545); }
+.dshpd-statusBadge[data-install-status='loading'] { border-color: var(--dsw-alias-brand-primary, #4176e6); color: var(--dsw-alias-brand-primary, #4176e6); }
 .dshpd-mineSource { font-size: 12px; line-height: 18px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--dsw-alias-label-secondary, #4b5563); overflow-wrap: anywhere; }
 .dshpd-mineMeta { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8a919f); }
 .dshpd-mineActions { display: flex; gap: 6px; flex-shrink: 0; }

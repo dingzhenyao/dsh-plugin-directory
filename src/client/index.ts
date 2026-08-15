@@ -4,7 +4,7 @@ import type {} from '@deepseek-ai/dsh-api-remotes'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type { AddEntryInput, InstalledEntry } from '../data/installed-types.ts'
+import type { AddEntryInput, InstalledEntry, InventoryRow } from '../data/installed-types.ts'
 import { DirectoryTab, type DirectoryTabInjected } from './DirectoryTab.tsx'
 import { FALLBACK } from './data.ts'
 import { en, zh, type DirectoryLocaleKey } from './locales.ts'
@@ -24,15 +24,17 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
 /** Dictionary namespace owned by this plugin. */
 export const NS = 'directory'
 
-/** Services required by the Settings registration and the mounted Remote. */
-export const inject = ['slots', 'locale', 'remote']
+/** Services required by the Settings registration and the mounted Remotes. */
+export const inject = ['slots', 'locale', 'remote', 'remote.pluginInventory']
 
 /** Async plugin-manager accessor handed to the tab (typed, unmount-aware). */
 export interface PluginManagerFace {
   list: () => Promise<InstalledEntry[]>
   add: (input: AddEntryInput) => Promise<InstalledEntry[]>
-  remove: (id: string) => Promise<InstalledEntry[]>
+  delete: (id: string) => Promise<InstalledEntry[]>
   update: (id: string) => Promise<InstalledEntry[]>
+  /** Read the harness's real Loader inventory (null when unavailable). */
+  inventory: () => Promise<InventoryRow[] | null>
 }
 
 /** Unwrap a Remote result, throwing the carrier's error on the failure branch. */
@@ -56,8 +58,17 @@ export async function apply(ctx: ClientContext): Promise<void> {
   const manager = (): PluginManagerFace => ({
     list: async () => unwrap(await ctx.remote.pluginManager.list()),
     add: async (input: AddEntryInput) => unwrap(await ctx.remote.pluginManager.add(input)),
-    remove: async (id: string) => unwrap(await ctx.remote.pluginManager.remove(id)),
+    delete: async (id: string) => unwrap(await ctx.remote.pluginManager.delete(id)),
     update: async (id: string) => unwrap(await ctx.remote.pluginManager.update(id)),
+    inventory: async () => {
+      const result = await ctx.remote.pluginInventory.list()
+      if (!result.ok) return null
+      return result.value.entries.map(entry => ({
+        moduleName: entry.moduleName,
+        enabled: entry.enabled,
+        phase: entry.fiberPhase,
+      }))
+    },
   })
 
   // The bundled snapshot is the offline fallback; the tab refreshes it from

@@ -11,7 +11,7 @@ describe('TYPERT_REMOTE contribution', () => {
   it('declares four direct descriptors under the pluginManager namespace', () => {
     expect(TYPERT_REMOTE.package).toBe('dsh-plugin-directory')
     expect(TYPERT_REMOTE.descriptors.map(descriptor => descriptor.method).sort()).toEqual(
-      ['add', 'list', 'remove', 'update'],
+      ['add', 'delete', 'list', 'update'],
     )
     for (const descriptor of TYPERT_REMOTE.descriptors) {
       expect(descriptor.namespace).toBe('pluginManager')

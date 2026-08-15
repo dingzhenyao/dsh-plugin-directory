@@ -13,8 +13,9 @@ afterEach(cleanup)
 const pluginManager: PluginManagerFace = {
   list: vi.fn().mockResolvedValue([]),
   add: vi.fn().mockResolvedValue([]),
-  remove: vi.fn().mockResolvedValue([]),
+  delete: vi.fn().mockResolvedValue([]),
   update: vi.fn().mockResolvedValue([]),
+  inventory: vi.fn().mockResolvedValue([]),
 }
 
 /** Minimal Translate stub mirroring the harness `{name}` interpolation. */
@@ -121,8 +122,11 @@ describe('apply registration', () => {
       pluginManager: {
         list: vi.fn().mockResolvedValue({ ok: true, value: [] }),
         add: vi.fn(),
-        remove: vi.fn(),
+        delete: vi.fn(),
         update: vi.fn(),
+      },
+      pluginInventory: {
+        list: vi.fn().mockResolvedValue({ ok: true, value: { entries: [] } }),
       },
     }
     const ctx = {

@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
-import type { AddEntryInput, InstalledEntry } from '../data/installed-types.ts'
+import {
+  matchInventory,
+  type AddEntryInput,
+  type InstalledEntry,
+  type InventoryRow,
+  type RealInstallStatus,
+} from '../data/installed-types.ts'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
@@ -18,7 +24,7 @@ export interface DirectoryTabInjected {
   plugins: PluginEntry[]
   /** Bundled directory statistics. */
   meta: MetaFile
-  /** Host plugin-manager Remote accessor (list/add/remove/update). */
+  /** Host plugin-manager Remote accessor (list/add/delete/update). */
   pluginManager: PluginManagerFace
 }
 
@@ -68,6 +74,10 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
   const [installed, setInstalled] = useState<InstalledEntry[]>([])
   const [installedStatus, setInstalledStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
+  // Real harness Loader inventory (read-only); null when the Remote is down.
+  const [inventory, setInventory] = useState<InventoryRow[] | null>(null)
+  const [inventoryStatus, setInventoryStatus] = useState<'loading' | 'ready' | 'error'>('loading')
+
   // Live search results (latest matching repos beyond the snapshot).
   const [liveState, setLiveState] = useState<LiveState>('idle')
   const [liveEntries, setLiveEntries] = useState<PluginEntry[]>([])
@@ -87,6 +97,32 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
     )
     return () => { current = false }
   }, [pluginManager])
+
+  // Sync the real harness Loader inventory on mount, then on demand.
+  const syncInventory = useCallback((): void => {
+    setInventoryStatus('loading')
+    void pluginManager.inventory().then(
+      (rows) => { setInventory(rows); setInventoryStatus('ready') },
+      () => setInventoryStatus('error'),
+    )
+  }, [pluginManager])
+
+  useEffect(() => {
+    let cancelled = false
+    // Re-run the load through the effect lifecycle so an unmount cannot leave
+    // a stale state write behind; syncInventory() itself is the click handler.
+    void pluginManager.inventory().then(
+      (rows) => { if (!cancelled) { setInventory(rows); setInventoryStatus('ready') } },
+      () => { if (!cancelled) setInventoryStatus('error') },
+    )
+    return () => { cancelled = true }
+  }, [pluginManager])
+
+  // Map each ledger entry to its real install status.
+  const installStatuses = useMemo(
+    () => matchInventory(installed, inventory),
+    [installed, inventory],
+  ) as Map<string, RealInstallStatus>
 
   // Validate the injected fallback payload; the snapshot itself is trusted
   // once the fallback is confirmed array-shaped.
@@ -172,7 +208,7 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
   }, [pluginManager])
 
   const removeById = useCallback((id: string): void => {
-    void pluginManager.remove(id).then(
+    void pluginManager.delete(id).then(
       (entries) => { setInstalled(entries); setInstalledStatus('ready') },
       () => setInstalledStatus('error'),
     )
@@ -311,7 +347,17 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
             </>
           )
       ) : null}
-      <MyPlugins t={t} installed={installed} status={installedStatus} onAdd={addManual} onRemove={removeById} onUpdate={updateById} />
+      <MyPlugins
+        t={t}
+        installed={installed}
+        status={installedStatus}
+        statuses={installStatuses}
+        inventoryStatus={inventoryStatus}
+        onSync={syncInventory}
+        onAdd={addManual}
+        onRemove={removeById}
+        onUpdate={updateById}
+      />
     </div>
   )
 }

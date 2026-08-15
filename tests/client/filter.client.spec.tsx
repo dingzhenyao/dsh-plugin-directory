@@ -14,8 +14,9 @@ afterEach(cleanup)
 const pluginManager: PluginManagerFace = {
   list: vi.fn().mockResolvedValue([]),
   add: vi.fn().mockResolvedValue([]),
-  remove: vi.fn().mockResolvedValue([]),
+  delete: vi.fn().mockResolvedValue([]),
   update: vi.fn().mockResolvedValue([]),
+  inventory: vi.fn().mockResolvedValue([]),
 }
 
 /** Minimal Translate stub mirroring the harness `{name}` interpolation. */

@@ -1,8 +1,13 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import { deriveFromSource, type AddEntryInput, type InstalledEntry } from '../data/installed-types.ts'
+import {
+  deriveFromSource,
+  type AddEntryInput,
+  type InstalledEntry,
+  type RealInstallStatus,
+} from '../data/installed-types.ts'
 
-/** The managed-plugins panel: list, update/remove, and a manual-add form. */
+/** The managed-plugins panel: list, update/remove, a manual-add form, and real install status. */
 export interface MyPluginsProps {
   /** Bound directory-namespace translate. */
   t: TranslateNS<'directory'>
@@ -10,6 +15,12 @@ export interface MyPluginsProps {
   installed: InstalledEntry[]
   /** Host-load/mutation status, used to show an error seat. */
   status: 'loading' | 'ready' | 'error'
+  /** Real install status per ledger id (from the harness Loader inventory). */
+  statuses: Map<string, RealInstallStatus>
+  /** Real inventory load status, drives the sync button. */
+  inventoryStatus: 'loading' | 'ready' | 'error'
+  /** Re-read the harness Loader inventory. */
+  onSync: () => void
   /** Reports a validated manual add (the source repo is already resolved to id/name). */
   onAdd: (input: AddEntryInput) => void
   /** Reports a remove request by id. */
@@ -19,7 +30,17 @@ export interface MyPluginsProps {
 }
 
 /** Render the "My plugins" section with a manual-add form and per-entry actions. */
-export function MyPlugins({ t, installed, status, onAdd, onRemove, onUpdate }: MyPluginsProps): ReactNode {
+export function MyPlugins({
+  t,
+  installed,
+  status,
+  statuses,
+  inventoryStatus,
+  onSync,
+  onAdd,
+  onRemove,
+  onUpdate,
+}: MyPluginsProps): ReactNode {
   const [source, setSource] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -37,7 +58,18 @@ export function MyPlugins({ t, installed, status, onAdd, onRemove, onUpdate }: M
 
   return (
     <section className="dshpd-mine" data-my-plugins>
-      <h3 className="dshpd-mineTitle">{t('myPluginsTitle')}</h3>
+      <div className="dshpd-headRow">
+        <h3 className="dshpd-mineTitle">{t('myPluginsTitle')}</h3>
+        <button
+          type="button"
+          className="dshpd-refresh"
+          data-sync-inventory
+          onClick={onSync}
+          disabled={inventoryStatus === 'loading'}
+        >
+          {inventoryStatus === 'loading' ? t('syncingStatus') : t('syncStatus')}
+        </button>
+      </div>
       <p className="dshpd-mineHint">{t('myPluginsHint')}</p>
       {status === 'error' ? <p className="dshpd-status" role="alert">{t('myPluginsError')}</p> : null}
       <form className="dshpd-mineForm" onSubmit={submit}>
@@ -64,7 +96,10 @@ export function MyPlugins({ t, installed, status, onAdd, onRemove, onUpdate }: M
           {installed.map(entry => (
             <li key={entry.id} className="dshpd-mineItem" data-installed-item={entry.id}>
               <div className="dshpd-mineInfo">
-                <span className="dshpd-mineName">{entry.name}</span>
+                <div className="dshpd-mineNameRow">
+                  <span className="dshpd-mineName">{entry.name}</span>
+                  <RealStatusBadge t={t} status={statuses.get(entry.id) ?? { kind: 'unknown' }} />
+                </div>
                 <span className="dshpd-mineSource">{entry.source}</span>
                 <span className="dshpd-mineMeta">
                   {entry.method === 'search' ? t('methodSearch') : t('methodManual')}
@@ -95,4 +130,24 @@ export function MyPlugins({ t, installed, status, onAdd, onRemove, onUpdate }: M
       ) : null}
     </section>
   )
+}
+
+/** One real install-status badge (installed/not-installed/unknown + phase/enabled). */
+function RealStatusBadge({ t, status }: { t: MyPluginsProps['t']; status: RealInstallStatus }): ReactNode {
+  if (status.kind === 'unknown') {
+    return <span className="dshpd-statusBadge" data-install-status="unknown">{t('statusUnknown')}</span>
+  }
+  if (status.kind === 'not-installed') {
+    return <span className="dshpd-statusBadge" data-install-status="not-installed">{t('statusNotInstalled')}</span>
+  }
+  if (!status.enabled) {
+    return <span className="dshpd-statusBadge" data-install-status="disabled">{t('statusDisabled')}</span>
+  }
+  if (status.phase === 'failed') {
+    return <span className="dshpd-statusBadge" data-install-status="failed">{t('statusFailed')}</span>
+  }
+  if (status.phase === 'loading' || status.phase === 'pending') {
+    return <span className="dshpd-statusBadge" data-install-status="loading">{t('statusLoading')}</span>
+  }
+  return <span className="dshpd-statusBadge" data-install-status="installed">{t('statusInstalled')}</span>
 }

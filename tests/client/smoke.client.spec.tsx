@@ -19,8 +19,9 @@ const t = ((key: DirectoryLocaleKey, params?: Record<string, unknown>): string =
 const pluginManager: PluginManagerFace = {
   list: vi.fn().mockResolvedValue([]),
   add: vi.fn().mockResolvedValue([]),
-  remove: vi.fn().mockResolvedValue([]),
+  delete: vi.fn().mockResolvedValue([]),
   update: vi.fn().mockResolvedValue([]),
+  inventory: vi.fn().mockResolvedValue([]),
 }
 
 const META: MetaFile = {

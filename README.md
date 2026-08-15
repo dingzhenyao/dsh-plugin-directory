@@ -134,18 +134,32 @@ Typert Remote (`ctx.remote.pluginManager.*`) from the browser:
 - **Add** accepts a manual source repository — `owner/repo` or
   `github:owner/repo` — and rejects anything that is not a valid
   `owner/repo` (method `manual`). The display name is the repo basename.
-- **Update** refreshes an entry's timestamp (reinstall); **Remove** deletes
+- **Update** refreshes an entry's timestamp (reinstall); **Delete** removes
   it.
+- **Sync status** reads the harness's **real Loader inventory** (the built-in
+  read-only `pluginInventory` Remote) and shows a per-entry badge: **installed**
+  (with `enabled`/`failed`/`loading` refinements), **disabled**, **not
+  installed**, or **unknown** (inventory unavailable). Matching is by the
+  Loader `moduleName` against the ledger id/source, with a unique-basename
+  fallback so an npm install of the same project still lines up with a
+  recorded git source.
+
+The ledger is bookkeeping only: it records which plugins you triggered an
+install for (plus manual additions), and it **does not** actually run
+`dsh plugin add`/remove or read your exact install state back into the file —
+the real install state is shown live via the inventory sync, not persisted.
 
 ### How the Remote works
 
 The host exports `PluginManagerGateway` (a `TypertRemoteService` subclass with
-`@Remote('list' | 'add' | 'remove' | 'update')` methods). The host gateway
+`@Remote('list' | 'add' | 'delete' | 'update')` methods). The host gateway
 discovers it through its SRC fallback (`resolveSrcDescriptor`) — no generated
 `./typert` manifest is required. The client half hand-writes the matching
 `TYPERT_REMOTE` contribution (`src/client/remote.ts`) with **strict** zod
 codecs (the client gateway rejects `src-json`), mounts it via
 `ctx.remote.$mount(...)`, and the tab calls `ctx.remote.pluginManager.*`.
+The real install status comes from the harness's own read-only
+`ctx.remote.pluginInventory` Remote (mounted by `@deepseek-ai/dsh-api-remotes`).
 
 The browser bundle needs `@deepseek-ai/dsh-api-remotes` injected (it provides
 `ctx.remote`), and the host build lowers the standard `@Remote` decorator via a
@@ -178,10 +192,12 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   follows the active UI language immediately, but category/install-form label
   dictionaries are read when the tab page opens: after switching the UI
   language, reopen the tab for the updated labels.
-- **"My plugins" records install intent, not harness state** — the panel
-  stores which plugins you triggered an install for (and manual additions) in
-  the host data file, but it does not read the harness's own Loader inventory;
-  an install you performed outside this directory is not auto-detected.
+- **"My plugins" is bookkeeping, status is live** — the panel stores which
+  plugins you triggered an install for (and manual additions) in the host data
+  file, but does not write the harness's real install state back; the
+  per-entry installed/disabled/failed badge is read live from the Loader
+  inventory via **Sync status**, so an install performed outside this
+  directory only shows up if its `moduleName` matches a recorded entry.
 - **CDN cache delay** — jsDelivr caches the snapshot for ~12h, so a fresh CI
   commit can take up to ~18h to reach the CDN refresh; live search covers the
   gap for newest repos.

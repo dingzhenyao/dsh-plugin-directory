@@ -15,8 +15,9 @@ afterEach(() => {
 const pluginManager: PluginManagerFace = {
   list: vi.fn().mockResolvedValue([]),
   add: vi.fn().mockResolvedValue([]),
-  remove: vi.fn().mockResolvedValue([]),
+  delete: vi.fn().mockResolvedValue([]),
   update: vi.fn().mockResolvedValue([]),
+  inventory: vi.fn().mockResolvedValue([]),
 }
 
 function makeT(dict: Record<DirectoryLocaleKey, string>): DirectoryTabProps['t'] {

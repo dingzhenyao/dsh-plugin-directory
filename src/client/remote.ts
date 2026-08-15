@@ -68,7 +68,7 @@ export const TYPERT_REMOTE: TypertRemoteContribution = {
   descriptors: [
     descriptor('list', []),
     descriptor('add', [jsonParam('input', AddEntryInputSchema)]),
-    descriptor('remove', [jsonParam('id', z.string())]),
+    descriptor('delete', [jsonParam('id', z.string())]),
     descriptor('update', [jsonParam('id', z.string())]),
   ],
 }
@@ -79,7 +79,7 @@ export default TYPERT_REMOTE
 export interface PluginManagerNamespace {
   list: () => Promise<RemoteResult<InstalledEntry[]>>
   add: (input: AddEntryInput) => Promise<RemoteResult<InstalledEntry[]>>
-  remove: (id: string) => Promise<RemoteResult<InstalledEntry[]>>
+  delete: (id: string) => Promise<RemoteResult<InstalledEntry[]>>
   update: (id: string) => Promise<RemoteResult<InstalledEntry[]>>
 }
 

@@ -57,8 +57,8 @@ export class PluginManagerGateway extends TypertRemoteService {
   }
 
   /** Remove one managed plugin by id. */
-  @Remote('remove')
-  async remove(id: string): Promise<InstalledEntry[]> {
+  @Remote('delete')
+  async delete(id: string): Promise<InstalledEntry[]> {
     const entries = await readInstalled()
     const next = entries.filter(entry => entry.id !== id)
     await writeInstalled(next)

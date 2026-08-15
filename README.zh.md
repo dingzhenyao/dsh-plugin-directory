@@ -107,16 +107,25 @@ Remote（`ctx.remote.pluginManager.*`）从浏览器写入：
   `search`）。
 - 「添加」接受手动来源仓库 —— `owner/repo` 或 `github:owner/repo`，非法
   `owner/repo` 会被拒绝（方式为 `manual`），显示名取仓库名。
-- 「更新」刷新条目时间戳（重新安装）；「移除」删除条目。
+- 「更新」刷新条目时间戳（重新安装）；「删除」删除条目。
+- 「同步状态」读取 harness 的**真实 Loader 清单**（内置只读 `pluginInventory`
+  Remote），在每条上显示徽章：**已安装**（含启用/加载失败/加载中细化）、**已禁用**、
+  **未安装** 或 **状态未知**（清单不可用）。匹配以 Loader 的 `moduleName` 对台账
+  id/source，带唯一 basename 回退——因此同一项目用 npm 安装也能对上记录的 git 来源。
+
+台账仅是记账：它记录你触发过安装的插件（以及手动添加项），**不会**真正执行
+`dsh plugin add`/remove，也不会把真实安装状态回写进文件——真实状态通过清单同步
+实时显示，而非持久化。
 
 ### Remote 工作原理
 
 宿主导出 `PluginManagerGateway`（继承 `TypertRemoteService`，带
-`@Remote('list' | 'add' | 'remove' | 'update')` 方法）。宿主网关通过其 SRC
+`@Remote('list' | 'add' | 'delete' | 'update')` 方法）。宿主网关通过其 SRC
 回退（`resolveSrcDescriptor`）发现它——无需生成 `./typert` 清单。客户端半边
 手写对应的 `TYPERT_REMOTE` 贡献（`src/client/remote.ts`），使用 **strict** zod
 codec（客户端网关拒绝 `src-json`），经 `ctx.remote.$mount(...)` 挂载后，tab 调用
-`ctx.remote.pluginManager.*`。
+`ctx.remote.pluginManager.*`。真实安装状态来自 harness 自带的只读
+`ctx.remote.pluginInventory` Remote（由 `@deepseek-ai/dsh-api-remotes` 挂载）。
 
 浏览器端需注入 `@deepseek-ai/dsh-api-remotes`（它提供 `ctx.remote`）；宿主构建
 通过 tsdown transform（`ts.transpileModule`）降级标准 `@Remote` 装饰器，使方法
@@ -147,9 +156,10 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
 - **类别标签语言** — 固定文案（tab 名、按钮、占位符）会随界面语言即时生效，但
   类别/安装形态标签字典在页面打开时读取：切换语言后需重新打开该 tab 才能看到
   更新后的标签。
-- **「我的插件」只记录安装意图，不反映 harness 状态** — 面板把「你触发过安装的
-  插件」和手动添加项写入宿主数据文件，但不读取 harness 自身的 Loader 清单；在
-  本目录之外执行的安装不会被自动探测到。
+- **「我的插件」是记账，状态实时显示** — 面板把「你触发过安装的插件」和手动添加项
+  写入宿主数据文件，但不把 harness 的真实安装状态回写；每条上的已安装/已禁用/加载
+  失败徽章通过「同步状态」从 Loader 清单实时读取，因此本目录之外的安装只有在
+  `moduleName` 匹配到某条记录时才会显示出来。
 - **CDN 缓存延迟** — jsDelivr 对快照缓存约 12 小时，CI 新提交最长约 18 小时才会
   反映到 CDN 刷新；最新仓库由实时搜索补齐。
 - **未认证搜索限额** — 实时搜索从浏览器直连 GitHub 搜索 API（未认证，10 次/分），
