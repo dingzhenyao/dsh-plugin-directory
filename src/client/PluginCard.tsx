@@ -14,10 +14,12 @@ export interface PluginCardProps {
   lang: 'zh' | 'en'
   /** Bound directory-namespace translate. */
   t: TranslateNS<'directory'>
+  /** Optional hook invoked when the user triggers an install (records it as "My plugins"). */
+  onInstall?: (entry: PluginEntry) => void
 }
 
 /** Render a semantic, bilingual repository card with one-click install. */
-function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
+function PluginCardImpl({ entry, lang, t, onInstall }: PluginCardProps): ReactNode {
   const [copied, setCopied] = useState(false)
   const command = entry.install.command
   // Every entry carries at least the git-install fallback
@@ -36,6 +38,7 @@ function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
 
   const copy = (): void => {
     if (command === null) return
+    onInstall?.(entry)
     const clipboard = navigator.clipboard
     if (!clipboard) return // non-secure context: copy from the <code> block
     void clipboard.writeText(command)

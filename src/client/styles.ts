@@ -31,6 +31,18 @@ const CSS = `
 .dshpd-liveTitle { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--dsw-alias-label-primary, #1f2329); }
 .dshpd-liveHint { margin: 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8a919f); }
 
+.dshpd-mine { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--dsw-alias-border-l2, #d0d5dd); border-radius: 12px; background: var(--dsw-alias-bg-layer-1, #ffffff); }
+.dshpd-mineTitle { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--dsw-alias-label-primary, #1f2329); }
+.dshpd-mineHint { margin: 0; font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8a919f); }
+.dshpd-mineForm { display: flex; align-items: stretch; gap: 8px; }
+.dshpd-mineList { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.dshpd-mineItem { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--dsw-alias-border-l2, #d0d5dd); border-radius: 8px; background: var(--dsw-alias-bg-layer-2, #f5f6f8); }
+.dshpd-mineInfo { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dshpd-mineName { font-size: 13px; font-weight: 600; line-height: 18px; color: var(--dsw-alias-label-primary, #1f2329); }
+.dshpd-mineSource { font-size: 12px; line-height: 18px; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--dsw-alias-label-secondary, #4b5563); overflow-wrap: anywhere; }
+.dshpd-mineMeta { font-size: 12px; line-height: 18px; color: var(--dsw-alias-label-tertiary, #8a919f); }
+.dshpd-mineActions { display: flex; gap: 6px; flex-shrink: 0; }
+
 .dshpd-bar { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border: 1px solid var(--dsw-alias-border-l2, #d0d5dd); border-radius: 12px; background: var(--dsw-alias-bg-layer-1, #ffffff); }
 .dshpd-search { box-sizing: border-box; width: 100%; padding: 8px 12px; border: 1px solid var(--dsw-alias-border-l2, #d0d5dd); border-radius: 8px; background: var(--dsw-alias-bg-layer-2, #f5f6f8); color: var(--dsw-alias-label-primary, #1f2329); font: inherit; font-size: 13px; line-height: 20px; }
 .dshpd-search::placeholder { color: var(--dsw-alias-label-tertiary, #8a919f); }

@@ -58,6 +58,11 @@ The tab is a client-side directory over a snapshot of the `dsh-plugin` topic:
 - **One-click install** — a card's **Install** button copies the plugin's
   install command, shown **only when the plugin's own README documents a real
   `dsh` install command** (see the extraction policy below).
+- **My plugins** — a personal management panel below the directory. Clicking
+  **Install** records the plugin, and you can also add plugins manually (the
+  source repository `owner/repo` is required) and remove or refresh existing
+  entries. The list is stored in the browser's `localStorage` under
+  `dsh-plugin-directory:installed` (see the note below).
 - **Refresh** — a manual refresh button re-pulls the latest snapshot from the
   CDN.
 
@@ -117,6 +122,26 @@ guessed install button.
   button. On rate-limit / failure the tab degrades to local results with a
   notice.
 
+## My plugins (local management)
+
+The **My plugins** panel records the plugins you manage through this
+directory. It lives in the browser's `localStorage` (key
+`dsh-plugin-directory:installed`), so it is per-browser and not written to a
+host-side file:
+
+- Clicking a card's **Install** button adds the plugin (recorded with the
+  `github:<owner>/<repo>` source and method `search`).
+- **Add** accepts a manual source repository — `owner/repo` or
+  `github:owner/repo` — and rejects anything that is not a valid
+  `owner/repo` (method `manual`). The display name is the repo basename.
+- **Update** refreshes an entry's timestamp (reinstall); **Remove** deletes
+  it.
+
+The validation helpers (`isSourceRepo` / `normalizeSource`) are shared with a
+host-side data-file layer (`src/data/installed.ts`), which is the drop-in
+replacement point if the list should later be persisted to
+`$DSH_HOME/storages/` via a host service instead of `localStorage`.
+
 ## Development
 
 ```sh
@@ -140,6 +165,10 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   follows the active UI language immediately, but category/install-form label
   dictionaries are read when the tab page opens: after switching the UI
   language, reopen the tab for the updated labels.
+- **"My plugins" is browser-local** — the managed list is stored in
+  `localStorage` (not a host file), so it is per-browser/per-origin and is
+  cleared when the browser storage is cleared; it also only records that you
+  triggered an install, not the harness's actual installed state.
 - **CDN cache delay** — jsDelivr caches the snapshot for ~12h, so a fresh CI
   commit can take up to ~18h to reach the CDN refresh; live search covers the
   gap for newest repos.

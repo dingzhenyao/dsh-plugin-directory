@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
+import type { InstalledEntry } from '../data/installed-types.ts'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
+import { MyPlugins } from './MyPlugins.tsx'
 import { CDN_BASE, fetchRemote, type Snapshot } from './data.ts'
 import { filterAndSort, type FilterControls } from './filter.ts'
+import { addInstalled, readInstalled } from './installedStore.ts'
 import { searchLive } from './liveSearch.ts'
 
 /** Registration-side inject face: the bundled bilingual snapshot (the fallback). */
@@ -58,6 +61,9 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
   })
   const [page, setPage] = useState(0)
   const [showAll, setShowAll] = useState(false)
+
+  // Managed plugins (localStorage-backed); read once, then mutated in place.
+  const [installed, setInstalled] = useState<InstalledEntry[]>(() => readInstalled())
 
   // Live search results (latest matching repos beyond the snapshot).
   const [liveState, setLiveState] = useState<LiveState>('idle')
@@ -128,6 +134,17 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
     setViewStatus('loading')
     setRequest(value => value + 1)
   }
+
+  // Record a search-result install into "My plugins" (localStorage). The entry
+  // id is already `owner/repo`, so its source is the canonical git reference.
+  const recordInstall = useCallback((entry: PluginEntry): void => {
+    setInstalled(addInstalled({
+      id: entry.id,
+      name: entry.name,
+      source: `github:${entry.id}`,
+      method: 'search',
+    }))
+  }, [])
 
   // Guard a malformed injected snapshot (null/non-array) before filtering; the
   // error seat still renders once the validation effect lands.
@@ -208,7 +225,7 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
               <div className="dshpd-results" data-results>
                 <div className="dshpd-cardList">
                   {pageEntries.map(entry => (
-                    <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
+                    <PluginCard key={entry.id} entry={entry} lang={lang} t={t} onInstall={recordInstall} />
                   ))}
                 </div>
                 {pageEntries.length === 0 ? <p className="dshpd-status">{t('empty')}</p> : null}
@@ -247,7 +264,7 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                   <p className="dshpd-liveHint">{t('liveHint')}</p>
                   <div className="dshpd-cardList">
                     {liveVisible.map(entry => (
-                      <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
+                      <PluginCard key={entry.id} entry={entry} lang={lang} t={t} onInstall={recordInstall} />
                     ))}
                   </div>
                 </section>
@@ -255,6 +272,7 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
             </>
           )
       ) : null}
+      <MyPlugins t={t} installed={installed} onChange={setInstalled} />
     </div>
   )
 }
