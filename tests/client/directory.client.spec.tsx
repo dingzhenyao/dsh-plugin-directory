@@ -6,8 +6,16 @@ import { DirectoryTab, type DirectoryTabInjected, type DirectoryTabProps } from 
 import { apply, NS } from '../../src/client/index.ts'
 import { en, zh, type DirectoryLocaleKey } from '../../src/client/locales.ts'
 import type { MetaFile, PluginEntry } from '../../src/data/types.ts'
+import type { PluginManagerFace } from '../../src/client/index.ts'
 
 afterEach(cleanup)
+
+const pluginManager: PluginManagerFace = {
+  list: vi.fn().mockResolvedValue([]),
+  add: vi.fn().mockResolvedValue([]),
+  remove: vi.fn().mockResolvedValue([]),
+  update: vi.fn().mockResolvedValue([]),
+}
 
 /** Minimal Translate stub mirroring the harness `{name}` interpolation. */
 function makeT(dict: Record<DirectoryLocaleKey, string>): DirectoryTabProps['t'] {
@@ -58,6 +66,7 @@ function props(lang: DirectoryTabInjected['lang'], plugins: PluginEntry[]): Dire
     lang,
     plugins,
     meta: META,
+    pluginManager,
   }
 }
 
@@ -97,7 +106,7 @@ describe('DirectoryTab three states', () => {
 })
 
 describe('apply registration', () => {
-  it('injects the directory tab with id "directory" and order 20', () => {
+  it('injects the directory tab with id "directory" and order 20', async () => {
     const locale = {
       register: vi.fn(() => () => {}),
       bind: vi.fn(() => (key: string) => `bound:${key}`),
@@ -107,14 +116,25 @@ describe('apply registration', () => {
       inject: vi.fn((_key: string, callback: () => () => void) => callback()),
       register: vi.fn((_options: Record<string, unknown>) => () => {}),
     }
+    const remote = {
+      $mount: vi.fn().mockResolvedValue(() => () => {}),
+      pluginManager: {
+        list: vi.fn().mockResolvedValue({ ok: true, value: [] }),
+        add: vi.fn(),
+        remove: vi.fn(),
+        update: vi.fn(),
+      },
+    }
     const ctx = {
       effect: vi.fn((fn: () => unknown) => { fn(); return () => {} }),
       locale,
       slots,
+      remote,
     } as unknown as ClientContext
 
-    apply(ctx)
+    await apply(ctx)
 
+    expect(remote.$mount).toHaveBeenCalledTimes(1)
     expect(slots.inject).toHaveBeenCalledWith('settings.plugins.tab', expect.any(Function))
     expect(slots.register).toHaveBeenCalledTimes(1)
     const options = slots.register.mock.calls[0]![0]
@@ -123,10 +143,11 @@ describe('apply registration', () => {
     expect(options.order).toBe(20)
     expect(options.locale).toBe(NS)
     expect((options.label as () => string)()).toBe('bound:tab')
-    // The inject face wires the active locale plus the bundled snapshot.
+    // The inject face wires the active locale, the bundled snapshot, and the manager.
     const injected = (options.inject as () => DirectoryTabInjected)()
     expect(injected.lang).toBe('zh')
     expect(Array.isArray(injected.plugins)).toBe(true)
+    expect(typeof injected.pluginManager.list).toBe('function')
     // The snapshot size is not fixed (curation drops noise), but the inject
     // face must be self-consistent: meta.total matches the entry count.
     expect(typeof injected.meta.total).toBe('number')

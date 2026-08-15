@@ -122,12 +122,12 @@ guessed install button.
   button. On rate-limit / failure the tab degrades to local results with a
   notice.
 
-## My plugins (local management)
+## My plugins (host-file management)
 
 The **My plugins** panel records the plugins you manage through this
-directory. It lives in the browser's `localStorage` (key
-`dsh-plugin-directory:installed`), so it is per-browser and not written to a
-host-side file:
+directory. It is backed by a **host-side data file** at
+`$DSH_HOME/storages/dsh-plugin-directory/installed.json`, written through a
+Typert Remote (`ctx.remote.pluginManager.*`) from the browser:
 
 - Clicking a card's **Install** button adds the plugin (recorded with the
   `github:<owner>/<repo>` source and method `search`).
@@ -137,10 +137,23 @@ host-side file:
 - **Update** refreshes an entry's timestamp (reinstall); **Remove** deletes
   it.
 
-The validation helpers (`isSourceRepo` / `normalizeSource`) are shared with a
-host-side data-file layer (`src/data/installed.ts`), which is the drop-in
-replacement point if the list should later be persisted to
-`$DSH_HOME/storages/` via a host service instead of `localStorage`.
+### How the Remote works
+
+The host exports `PluginManagerGateway` (a `TypertRemoteService` subclass with
+`@Remote('list' | 'add' | 'remove' | 'update')` methods). The host gateway
+discovers it through its SRC fallback (`resolveSrcDescriptor`) — no generated
+`./typert` manifest is required. The client half hand-writes the matching
+`TYPERT_REMOTE` contribution (`src/client/remote.ts`) with **strict** zod
+codecs (the client gateway rejects `src-json`), mounts it via
+`ctx.remote.$mount(...)`, and the tab calls `ctx.remote.pluginManager.*`.
+
+The browser bundle needs `@deepseek-ai/dsh-api-remotes` injected (it provides
+`ctx.remote`), and the host build lowers the standard `@Remote` decorator via a
+tsdown transform (`ts.transpileModule`) so the method markers register at
+runtime.
+
+The validation helpers (`isSourceRepo` / `normalizeSource`) are shared between
+the host (`src/data/installed.ts`) and client (`src/data/installed-types.ts`).
 
 ## Development
 
@@ -165,10 +178,10 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   follows the active UI language immediately, but category/install-form label
   dictionaries are read when the tab page opens: after switching the UI
   language, reopen the tab for the updated labels.
-- **"My plugins" is browser-local** — the managed list is stored in
-  `localStorage` (not a host file), so it is per-browser/per-origin and is
-  cleared when the browser storage is cleared; it also only records that you
-  triggered an install, not the harness's actual installed state.
+- **"My plugins" records install intent, not harness state** — the panel
+  stores which plugins you triggered an install for (and manual additions) in
+  the host data file, but it does not read the harness's own Loader inventory;
+  an install you performed outside this directory is not auto-detected.
 - **CDN cache delay** — jsDelivr caches the snapshot for ~12h, so a fresh CI
   commit can take up to ~18h to reach the CDN refresh; live search covers the
   gap for newest repos.

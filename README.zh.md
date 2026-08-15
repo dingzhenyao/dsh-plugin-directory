@@ -97,10 +97,11 @@ npm 安装的 `dsh` 都能满足。
   匹配仓库（防抖、20 条），去重后以「实时结果」区块追加展示。实时结果无 README
   检测，因此不显示安装按钮；限流/失败时降级为仅本地结果并给出提示。
 
-## 我的插件（本地管理）
+## 我的插件（宿主文件管理）
 
-「我的插件」面板记录你通过本目录管理的插件，数据保存在浏览器 `localStorage`
-（键 `dsh-plugin-directory:installed`），因此**按浏览器隔离**、不写入宿主文件：
+「我的插件」面板记录你通过本目录管理的插件，数据由**宿主数据文件**
+`$DSH_HOME/storages/dsh-plugin-directory/installed.json` 承载，通过 Typert
+Remote（`ctx.remote.pluginManager.*`）从浏览器写入：
 
 - 点击卡片「安装」按钮即添加该插件（来源记为 `github:<owner>/<repo>`，方式为
   `search`）。
@@ -108,9 +109,21 @@ npm 安装的 `dsh` 都能满足。
   `owner/repo` 会被拒绝（方式为 `manual`），显示名取仓库名。
 - 「更新」刷新条目时间戳（重新安装）；「移除」删除条目。
 
-校验辅助函数（`isSourceRepo` / `normalizeSource`）与宿主数据文件层
-（`src/data/installed.ts`）共用，若日后要改为通过宿主服务把列表持久化到
-`$DSH_HOME/storages/`，只需替换这一层即可。
+### Remote 工作原理
+
+宿主导出 `PluginManagerGateway`（继承 `TypertRemoteService`，带
+`@Remote('list' | 'add' | 'remove' | 'update')` 方法）。宿主网关通过其 SRC
+回退（`resolveSrcDescriptor`）发现它——无需生成 `./typert` 清单。客户端半边
+手写对应的 `TYPERT_REMOTE` 贡献（`src/client/remote.ts`），使用 **strict** zod
+codec（客户端网关拒绝 `src-json`），经 `ctx.remote.$mount(...)` 挂载后，tab 调用
+`ctx.remote.pluginManager.*`。
+
+浏览器端需注入 `@deepseek-ai/dsh-api-remotes`（它提供 `ctx.remote`）；宿主构建
+通过 tsdown transform（`ts.transpileModule`）降级标准 `@Remote` 装饰器，使方法
+标记在运行时正确注册。
+
+校验辅助函数（`isSourceRepo` / `normalizeSource`）在宿主
+（`src/data/installed.ts`）与客户端（`src/data/installed-types.ts`）间共用。
 
 ## 开发
 
@@ -134,9 +147,9 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
 - **类别标签语言** — 固定文案（tab 名、按钮、占位符）会随界面语言即时生效，但
   类别/安装形态标签字典在页面打开时读取：切换语言后需重新打开该 tab 才能看到
   更新后的标签。
-- **「我的插件」为浏览器本地存储** — 管理列表保存在 `localStorage`（非宿主文件），
-  因此按浏览器/源隔离，清除浏览器存储即丢失；且仅记录你触发过安装，并不反映
-  harness 的真实安装状态。
+- **「我的插件」只记录安装意图，不反映 harness 状态** — 面板把「你触发过安装的
+  插件」和手动添加项写入宿主数据文件，但不读取 harness 自身的 Loader 清单；在
+  本目录之外执行的安装不会被自动探测到。
 - **CDN 缓存延迟** — jsDelivr 对快照缓存约 12 小时，CI 新提交最长约 18 小时才会
   反映到 CDN 刷新；最新仓库由实时搜索补齐。
 - **未认证搜索限额** — 实时搜索从浏览器直连 GitHub 搜索 API（未认证，10 次/分），

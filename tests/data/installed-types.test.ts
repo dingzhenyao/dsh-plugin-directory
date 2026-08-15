@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isSourceRepo, normalizeSource } from '../../src/data/installed-types.ts'
+import { deriveFromSource, isSourceRepo, normalizeSource } from '../../src/data/installed-types.ts'
 
 describe('installed source validation', () => {
   it('accepts owner/repo and github:owner/repo', () => {
@@ -19,5 +19,14 @@ describe('installed source validation', () => {
     expect(normalizeSource('owner/repo')).toBe('github:owner/repo')
     expect(normalizeSource('github:owner/repo')).toBe('github:owner/repo')
     expect(normalizeSource('  github:owner/repo  ')).toBe('github:owner/repo')
+  })
+
+  it('derives id/name from a valid source and rejects malformed ones', () => {
+    expect(deriveFromSource('acme/plugin')).toEqual({ id: 'acme/plugin', name: 'plugin' })
+    expect(deriveFromSource('github:acme/plugin')).toEqual({ id: 'acme/plugin', name: 'plugin' })
+    expect(deriveFromSource('  github:acme/plugin  ')).toEqual({ id: 'acme/plugin', name: 'plugin' })
+    expect(deriveFromSource('justaname')).toBeNull()
+    expect(deriveFromSource('a/b/c')).toBeNull()
+    expect(deriveFromSource('')).toBeNull()
   })
 })

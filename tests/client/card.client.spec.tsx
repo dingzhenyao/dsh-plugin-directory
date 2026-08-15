@@ -6,11 +6,19 @@ import { PluginCard, type PluginCardProps } from '../../src/client/PluginCard.ts
 import { en, zh, type DirectoryLocaleKey } from '../../src/client/locales.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL } from '../../src/data/constants.ts'
 import type { MetaFile, PluginEntry } from '../../src/data/types.ts'
+import type { PluginManagerFace } from '../../src/client/index.ts'
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
+
+const pluginManager: PluginManagerFace = {
+  list: vi.fn().mockResolvedValue([]),
+  add: vi.fn().mockResolvedValue([]),
+  remove: vi.fn().mockResolvedValue([]),
+  update: vi.fn().mockResolvedValue([]),
+}
 
 /** Minimal Translate stub mirroring the harness `{name}` interpolation. */
 function makeT(dict: Record<DirectoryLocaleKey, string>): PluginCardProps['t'] {
@@ -136,7 +144,7 @@ describe('DirectoryTab wiring', () => {
       pluginFixture({ id: 'a/one', name: 'one', owner: 'a', htmlUrl: 'https://github.com/a/one', category: 'tool' }),
       pluginFixture({ id: 'b/two', name: 'two', owner: 'b', htmlUrl: 'https://github.com/b/two', category: 'mcp' }),
     ]
-    const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} />)
+    const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} pluginManager={pluginManager} />)
     await screen.findByText(zh.repoCount.replace('{count}', '2'))
     expect(view.container.querySelectorAll('article[data-plugin-card]')).toHaveLength(2)
     expect(screen.getByText('one')).toBeTruthy()

@@ -1,20 +1,25 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
-import type { InstalledEntry } from '../data/installed-types.ts'
-import { addInstalled, deriveFromSource, removeInstalled, updateInstalled } from './installedStore.ts'
+import { deriveFromSource, type AddEntryInput, type InstalledEntry } from '../data/installed-types.ts'
 
 /** The managed-plugins panel: list, update/remove, and a manual-add form. */
 export interface MyPluginsProps {
   /** Bound directory-namespace translate. */
   t: TranslateNS<'directory'>
-  /** Current managed plugins (state lives in the tab; this panel mutates it). */
+  /** Current managed plugins (owned by the tab; this panel only reports intent). */
   installed: InstalledEntry[]
-  /** Reports the next managed-plugins list after any add/remove/update. */
-  onChange: (next: InstalledEntry[]) => void
+  /** Host-load/mutation status, used to show an error seat. */
+  status: 'loading' | 'ready' | 'error'
+  /** Reports a validated manual add (the source repo is already resolved to id/name). */
+  onAdd: (input: AddEntryInput) => void
+  /** Reports a remove request by id. */
+  onRemove: (id: string) => void
+  /** Reports an update/reinstall request by id. */
+  onUpdate: (id: string) => void
 }
 
 /** Render the "My plugins" section with a manual-add form and per-entry actions. */
-export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode {
+export function MyPlugins({ t, installed, status, onAdd, onRemove, onUpdate }: MyPluginsProps): ReactNode {
   const [source, setSource] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -25,7 +30,7 @@ export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode
       setError(t('sourceInvalid'))
       return
     }
-    onChange(addInstalled({ id: derived.id, name: derived.name, source, method: 'manual' }))
+    onAdd({ id: derived.id, name: derived.name, source, method: 'manual' })
     setSource('')
     setError(null)
   }
@@ -34,6 +39,7 @@ export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode
     <section className="dshpd-mine" data-my-plugins>
       <h3 className="dshpd-mineTitle">{t('myPluginsTitle')}</h3>
       <p className="dshpd-mineHint">{t('myPluginsHint')}</p>
+      {status === 'error' ? <p className="dshpd-status" role="alert">{t('myPluginsError')}</p> : null}
       <form className="dshpd-mineForm" onSubmit={submit}>
         <input
           className="dshpd-search"
@@ -49,9 +55,11 @@ export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode
         </button>
       </form>
       {error !== null ? <p className="dshpd-status" role="alert">{error}</p> : null}
-      {installed.length === 0 ? (
+      {status === 'loading' ? <p className="dshpd-status">{t('myPluginsLoading')}</p> : null}
+      {status !== 'loading' && installed.length === 0 ? (
         <p className="dshpd-status">{t('myPluginsEmpty')}</p>
-      ) : (
+      ) : null}
+      {installed.length > 0 ? (
         <ul className="dshpd-mineList" data-installed-list>
           {installed.map(entry => (
             <li key={entry.id} className="dshpd-mineItem" data-installed-item={entry.id}>
@@ -68,7 +76,7 @@ export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode
                   type="button"
                   className="dshpd-pageButton"
                   data-installed-update
-                  onClick={() => onChange(updateInstalled(entry.id))}
+                  onClick={() => onUpdate(entry.id)}
                 >
                   {t('update')}
                 </button>
@@ -76,7 +84,7 @@ export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode
                   type="button"
                   className="dshpd-pageButton"
                   data-installed-remove
-                  onClick={() => onChange(removeInstalled(entry.id))}
+                  onClick={() => onRemove(entry.id)}
                 >
                   {t('remove')}
                 </button>
@@ -84,7 +92,7 @@ export function MyPlugins({ t, installed, onChange }: MyPluginsProps): ReactNode
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </section>
   )
 }

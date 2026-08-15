@@ -5,11 +5,19 @@ import { DirectoryTab, type DirectoryTabProps } from '../../src/client/Directory
 import { searchLive } from '../../src/client/liveSearch.ts'
 import { zh, type DirectoryLocaleKey } from '../../src/client/locales.ts'
 import type { MetaFile, PluginEntry } from '../../src/data/types.ts'
+import type { PluginManagerFace } from '../../src/client/index.ts'
 
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
 })
+
+const pluginManager: PluginManagerFace = {
+  list: vi.fn().mockResolvedValue([]),
+  add: vi.fn().mockResolvedValue([]),
+  remove: vi.fn().mockResolvedValue([]),
+  update: vi.fn().mockResolvedValue([]),
+}
 
 function makeT(dict: Record<DirectoryLocaleKey, string>): DirectoryTabProps['t'] {
   return ((key: DirectoryLocaleKey, params?: Record<string, unknown>): string => {
@@ -69,7 +77,7 @@ describe('CDN hot update', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} />)
+    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} pluginManager={pluginManager} />)
 
     await screen.findByText('RemoteX')
     expect(screen.queryByText('LocalA')).toBeNull()
@@ -79,7 +87,7 @@ describe('CDN hot update', () => {
   it('falls back to the bundled snapshot when the CDN fetch fails', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
 
-    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} />)
+    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} pluginManager={pluginManager} />)
 
     await screen.findByText('LocalA')
     expect(screen.getByText('LocalA')).toBeTruthy()
@@ -128,7 +136,7 @@ describe('live search', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} />)
+    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} pluginManager={pluginManager} />)
     await screen.findByText('LocalA')
 
     fireEvent.change(screen.getByPlaceholderText(zh.searchPlaceholder), { target: { value: 'vision' } })
@@ -145,7 +153,7 @@ describe('live search', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} />)
+    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} pluginManager={pluginManager} />)
     await screen.findByText('LocalA')
 
     fireEvent.change(screen.getByPlaceholderText(zh.searchPlaceholder), { target: { value: 'vision' } })

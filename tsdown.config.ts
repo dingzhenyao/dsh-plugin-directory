@@ -11,7 +11,41 @@
  */
 import { readFile } from 'node:fs/promises'
 import { basename, dirname, resolve } from 'node:path'
+import ts from 'typescript'
 import type { UserConfig } from 'tsdown'
+
+/** Matches a line starting with a standard decorator (`@Remote(...)` etc.). */
+const DECORATOR_SYNTAX = /^\s*@[A-Za-z_$][\w$]*/m
+
+/**
+ * Lower standard decorators via TypeScript's own transpiler before rolldown
+ * bundles. The `@Remote` decorator from `dsh-typert-protocol` uses
+ * `ClassMethodDecoratorContext.addInitializer`, which rolldown/oxc does not
+ * emit; the reference harness build does the same lowering in its typert
+ * tsdown plugin. Without it, `@Remote(...)` is emitted verbatim and the SRC
+ * fallback never discovers the method markers.
+ */
+function decoratorLoweringPlugin(): Record<string, unknown> {
+  return {
+    name: 'dsh-decorator-lowering',
+    transform(code: string, id: string) {
+      const file = id.split('?', 1)[0] ?? id
+      if (!/\.tsx?$/.test(file) || !DECORATOR_SYNTAX.test(code)) return null
+      const result = ts.transpileModule(code, {
+        fileName: file,
+        compilerOptions: {
+          target: ts.ScriptTarget.ES2024,
+          module: ts.ModuleKind.ESNext,
+          sourceMap: true,
+        },
+      })
+      return {
+        code: result.outputText.replace(/\n?\/\/# sourceMappingURL=.*$/u, '\n'),
+        map: result.sourceMapText,
+      }
+    },
+  }
+}
 
 /**
  * Browser platform modules the DSH shell shares into the frozen loader
@@ -94,7 +128,7 @@ function cssModulesPlugin(): Record<string, unknown> {
 }
 
 export default [
-  // Node half: the host loader entry (empty host apply).
+  // Node half: the host loader entry (the plugin-manager Remote service).
   {
     name: PLUGIN_ID,
     entry: 'src/index.ts',
@@ -107,6 +141,7 @@ export default [
     fixedExtension: false,
     dts: false,
     clean: false,
+    plugins: [decoratorLoweringPlugin()],
   },
   // Browser half: the client bundle consumed through exports["./client"].
   {

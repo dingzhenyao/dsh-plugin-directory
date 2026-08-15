@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
-import type { InstalledEntry } from '../data/installed-types.ts'
+import type { AddEntryInput, InstalledEntry } from '../data/installed-types.ts'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
 import { MyPlugins } from './MyPlugins.tsx'
 import { CDN_BASE, fetchRemote, type Snapshot } from './data.ts'
 import { filterAndSort, type FilterControls } from './filter.ts'
-import { addInstalled, readInstalled } from './installedStore.ts'
 import { searchLive } from './liveSearch.ts'
+import type { PluginManagerFace } from './index.ts'
 
-/** Registration-side inject face: the bundled bilingual snapshot (the fallback). */
+/** Registration-side inject face: the bundled bilingual snapshot plus the host manager. */
 export interface DirectoryTabInjected {
   /** Active UI language; drives category / install-form label lookups. */
   lang: 'zh' | 'en'
@@ -18,6 +18,8 @@ export interface DirectoryTabInjected {
   plugins: PluginEntry[]
   /** Bundled directory statistics. */
   meta: MetaFile
+  /** Host plugin-manager Remote accessor (list/add/remove/update). */
+  pluginManager: PluginManagerFace
 }
 
 /** Full component props assembled by the Settings slot renderer. */
@@ -41,7 +43,7 @@ const TOP_N = 50
 const QUERY_DEBOUNCE_MS = 250
 
 /** Render the plugin directory tab with loading / empty / error seats. */
-export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): ReactNode {
+export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: DirectoryTabProps): ReactNode {
   const [viewStatus, setViewStatus] = useState<ViewStatus>('loading')
   const [request, setRequest] = useState(0)
 
@@ -62,8 +64,9 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
   const [page, setPage] = useState(0)
   const [showAll, setShowAll] = useState(false)
 
-  // Managed plugins (localStorage-backed); read once, then mutated in place.
-  const [installed, setInstalled] = useState<InstalledEntry[]>(() => readInstalled())
+  // Managed plugins come from the host file; loaded once, then mutated in place.
+  const [installed, setInstalled] = useState<InstalledEntry[]>([])
+  const [installedStatus, setInstalledStatus] = useState<'loading' | 'ready' | 'error'>('loading')
 
   // Live search results (latest matching repos beyond the snapshot).
   const [liveState, setLiveState] = useState<LiveState>('idle')
@@ -73,6 +76,17 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
     const id = setTimeout(() => setDebouncedQuery(query), QUERY_DEBOUNCE_MS)
     return () => clearTimeout(id)
   }, [query])
+
+  // Load the host-managed plugins once on mount.
+  useEffect(() => {
+    let current = true
+    setInstalledStatus('loading')
+    void pluginManager.list().then(
+      (entries) => { if (current) { setInstalled(entries); setInstalledStatus('ready') } },
+      () => { if (current) setInstalledStatus('error') },
+    )
+    return () => { current = false }
+  }, [pluginManager])
 
   // Validate the injected fallback payload; the snapshot itself is trusted
   // once the fallback is confirmed array-shaped.
@@ -135,16 +149,41 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
     setRequest(value => value + 1)
   }
 
-  // Record a search-result install into "My plugins" (localStorage). The entry
+  // Record a search-result install into "My plugins" (host file). The entry
   // id is already `owner/repo`, so its source is the canonical git reference.
   const recordInstall = useCallback((entry: PluginEntry): void => {
-    setInstalled(addInstalled({
+    void pluginManager.add({
       id: entry.id,
       name: entry.name,
       source: `github:${entry.id}`,
       method: 'search',
-    }))
-  }, [])
+    }).then(
+      (entries) => { setInstalled(entries); setInstalledStatus('ready') },
+      () => setInstalledStatus('error'),
+    )
+  }, [pluginManager])
+
+  // Manual add / remove / update handlers, mirrored through the host manager.
+  const addManual = useCallback((input: AddEntryInput): void => {
+    void pluginManager.add(input).then(
+      (entries) => { setInstalled(entries); setInstalledStatus('ready') },
+      () => setInstalledStatus('error'),
+    )
+  }, [pluginManager])
+
+  const removeById = useCallback((id: string): void => {
+    void pluginManager.remove(id).then(
+      (entries) => { setInstalled(entries); setInstalledStatus('ready') },
+      () => setInstalledStatus('error'),
+    )
+  }, [pluginManager])
+
+  const updateById = useCallback((id: string): void => {
+    void pluginManager.update(id).then(
+      (entries) => { setInstalled(entries); setInstalledStatus('ready') },
+      () => setInstalledStatus('error'),
+    )
+  }, [pluginManager])
 
   // Guard a malformed injected snapshot (null/non-array) before filtering; the
   // error seat still renders once the validation effect lands.
@@ -272,7 +311,7 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
             </>
           )
       ) : null}
-      <MyPlugins t={t} installed={installed} onChange={setInstalled} />
+      <MyPlugins t={t} installed={installed} status={installedStatus} onAdd={addManual} onRemove={removeById} onUpdate={updateById} />
     </div>
   )
 }

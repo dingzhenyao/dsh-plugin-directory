@@ -7,8 +7,16 @@ import { FilterBar, type FilterBarProps } from '../../src/client/FilterBar.tsx'
 import { en, zh, type DirectoryLocaleKey } from '../../src/client/locales.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL } from '../../src/data/constants.ts'
 import type { MetaFile, PluginEntry } from '../../src/data/types.ts'
+import type { PluginManagerFace } from '../../src/client/index.ts'
 
 afterEach(cleanup)
+
+const pluginManager: PluginManagerFace = {
+  list: vi.fn().mockResolvedValue([]),
+  add: vi.fn().mockResolvedValue([]),
+  remove: vi.fn().mockResolvedValue([]),
+  update: vi.fn().mockResolvedValue([]),
+}
 
 /** Minimal Translate stub mirroring the harness `{name}` interpolation. */
 function makeT(dict: Record<DirectoryLocaleKey, string>): DirectoryTabProps['t'] {
@@ -142,7 +150,7 @@ describe('DirectoryTab filter wiring', () => {
   ]
 
   it('renders all cards in the default star-desc order', async () => {
-    const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} />)
+    const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} pluginManager={pluginManager} />)
     await screen.findByText('VisionLens')
     const names = [...view.container.querySelectorAll('[data-plugin-card] [data-owner-link]')]
       .map(el => el.textContent)
@@ -150,7 +158,7 @@ describe('DirectoryTab filter wiring', () => {
   })
 
   it('narrows the listing when the search box changes (debounced)', async () => {
-    const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} />)
+    const view = render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={plugins} meta={META} pluginManager={pluginManager} />)
     await screen.findByText('VisionLens')
     fireEvent.change(screen.getByPlaceholderText(zh.searchPlaceholder), { target: { value: 'vision' } })
     // The query is debounced; the narrowed result arrives a beat later.

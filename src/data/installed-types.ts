@@ -39,3 +39,12 @@ export function normalizeSource(value: string): string {
   const trimmed = value.trim().replace(/^github:/, '')
   return `github:${trimmed}`
 }
+
+/** Derive `{ id, name }` from a user-entered `owner/repo` (or `github:owner/repo`). */
+export function deriveFromSource(source: string): { id: string; name: string } | null {
+  const trimmed = source.trim()
+  if (!isSourceRepo(trimmed)) return null
+  const id = normalizeSource(trimmed).slice('github:'.length)
+  const name = id.slice(id.indexOf('/') + 1)
+  return { id, name }
+}
