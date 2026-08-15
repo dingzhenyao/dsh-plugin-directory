@@ -93,7 +93,7 @@ function makeFixture(): Fixture {
 
 function makeClient(fixture: Fixture): GithubClient {
   return {
-    fetchTopicRepos: vi.fn(async () => fixture.repos),
+    fetchCandidates: vi.fn(async () => fixture.repos),
     fetchPackageJson: vi.fn(async (id: string) => fixture.pkg[id] ?? null),
     fetchReadme: vi.fn(async (id: string) => fixture.readme[id] ?? null),
     hasDsPluginDir: vi.fn(async (id: string) => fixture.hasDir[id] ?? false),
@@ -230,7 +230,7 @@ describe('runSync', () => {
     expect(meta.total).toBe(2)
   })
 
-  it('curates: drops empty repos and repos without a DSH signal', async () => {
+  it('drops empty repos (pushed_at null)', async () => {
     const dir = await makeOutDir()
     const empty = baseRepo({
       full_name: 'acme/empty',
@@ -239,12 +239,6 @@ describe('runSync', () => {
       topics: ['dsh-plugin'],
       pushed_at: null,
     })
-    const noisy = baseRepo({
-      full_name: 'acme/not-a-plugin',
-      name: 'something-else',
-      description: 'unrelated image uploader',
-      topics: ['images'],
-    })
     const kept = baseRepo({
       full_name: 'acme/dsh-tool',
       name: 'dsh-tool',
@@ -252,7 +246,7 @@ describe('runSync', () => {
       topics: ['dsh-plugin'],
     })
     const fixture = makeFixture()
-    fixture.repos = [empty, noisy, kept]
+    fixture.repos = [empty, kept]
     fixture.pkg = {}
     fixture.readme = {}
     fixture.hasDir = {}

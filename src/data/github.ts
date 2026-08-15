@@ -30,7 +30,7 @@ export interface RawRepo {
  * fixture-backed mock and never touch the network.
  */
 export interface GithubClient {
-  fetchTopicRepos(token?: string): Promise<RawRepo[]>
+  fetchCandidates(token?: string): Promise<RawRepo[]>
   fetchPackageJson(id: string, ref?: string): Promise<PackageManifest | null>
   fetchReadme(id: string, ref?: string): Promise<string | null>
   hasDsPluginDir(id: string, ref?: string): Promise<boolean>
@@ -38,7 +38,20 @@ export interface GithubClient {
 
 const API_BASE = 'https://api.github.com'
 const SEARCH_PAGE_SIZE = 100
-const MAX_SEARCH_PAGES = 10
+const MAX_PAGES_PER_QUERY = 3
+
+/**
+ * Stage-one candidate queries. Each is scoped to the `dsh-plugin` topic and
+ * uses a server-side `in:` qualifier so only repos that look like actual
+ * plugins survive — high-star "finished software" that merely mentions
+ * "supports DeepSeek Harness" in its description is excluded here, before any
+ * per-repo inspection.
+ */
+const CANDIDATE_QUERIES = [
+  'topic:dsh-plugin "dsh plugin add" in:readme',
+  'topic:dsh-plugin dsh in:name',
+  'topic:dsh-plugin "dsh plugin" in:description',
+] as const
 
 /** Minimal shapes of the GitHub REST payloads we read. */
 interface SearchRepoItem {
@@ -96,47 +109,49 @@ export function createGithubClient(): GithubClient {
   }
 
   return {
-    async fetchTopicRepos(token) {
+    async fetchCandidates(token) {
       const seen = new Set<string>()
       const repos: RawRepo[] = []
-      for (let page = 1; page <= MAX_SEARCH_PAGES; page++) {
-        const res = await request(
-          `/search/repositories?q=topic:dsh-plugin&per_page=${SEARCH_PAGE_SIZE}&page=${page}`,
-          token,
-        )
-        if (!res.ok) {
-          // The first page must fail loud: a 401 (bad token) or 403 (rate
-          // limit) would otherwise silently produce an empty/partial catalog.
-          // On later pages a non-OK just stops pagination (partial progress).
-          if (page === 1) throw new Error(`GitHub search failed: ${res.status}`)
-          break
+      for (const query of CANDIDATE_QUERIES) {
+        for (let page = 1; page <= MAX_PAGES_PER_QUERY; page++) {
+          const res = await request(
+            `/search/repositories?q=${encodeURIComponent(query)}&per_page=${SEARCH_PAGE_SIZE}&page=${page}`,
+            token,
+          )
+          if (!res.ok) {
+            // The first page of the first query must fail loud: a 401 (bad
+            // token) or 403 (rate limit) would otherwise silently produce an
+            // empty catalog. Later non-OK responses stop that query (partial).
+            if (page === 1) throw new Error(`GitHub search failed: ${res.status}`)
+            break
+          }
+          const body = (await res.json()) as SearchResponse
+          const items = body.items ?? []
+          for (const item of items) {
+            if (seen.has(item.full_name)) continue
+            seen.add(item.full_name)
+            repos.push({
+              full_name: item.full_name,
+              name: item.name,
+              owner: item.owner?.login ?? '',
+              html_url: item.html_url,
+              description: item.description,
+              homepage: item.homepage,
+              topics: item.topics,
+              language: item.language,
+              license: item.license,
+              stargazers_count: item.stargazers_count,
+              forks_count: item.forks_count,
+              created_at: item.created_at,
+              pushed_at: item.pushed_at,
+              archived: item.archived,
+              fork: item.fork,
+              default_branch: item.default_branch,
+            })
+          }
+          // A short page means the last page was reached; stop early.
+          if (items.length < SEARCH_PAGE_SIZE) break
         }
-        const body = (await res.json()) as SearchResponse
-        const items = body.items ?? []
-        for (const item of items) {
-          if (seen.has(item.full_name)) continue
-          seen.add(item.full_name)
-          repos.push({
-            full_name: item.full_name,
-            name: item.name,
-            owner: item.owner?.login ?? '',
-            html_url: item.html_url,
-            description: item.description,
-            homepage: item.homepage,
-            topics: item.topics,
-            language: item.language,
-            license: item.license,
-            stargazers_count: item.stargazers_count,
-            forks_count: item.forks_count,
-            created_at: item.created_at,
-            pushed_at: item.pushed_at,
-            archived: item.archived,
-            fork: item.fork,
-            default_branch: item.default_branch,
-          })
-        }
-        // A short page means the last page was reached; stop early.
-        if (items.length < SEARCH_PAGE_SIZE) break
       }
       return repos
     },
