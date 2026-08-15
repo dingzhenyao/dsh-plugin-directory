@@ -38,23 +38,34 @@ export interface GithubClient {
 
 const API_BASE = 'https://api.github.com'
 const SEARCH_PAGE_SIZE = 100
-const MAX_PAGES_PER_QUERY = 3
+// GitHub caps search at 1000 results per query (10 pages × 100). The
+// `dsh-plugin` topic alone now holds thousands of repos, so a small page cap
+// silently drops real plugins buried in the tail. Sort by stars so genuine
+// plugins (which attract stars) survive the cap while list/boilerplate noise
+// falls off first.
+const MAX_PAGES_PER_QUERY = 10
+const SEARCH_SORT = 'stars'
+const SEARCH_ORDER = 'desc'
 
 /**
  * Stage-one candidate queries. Results are unioned and deduplicated by
- * `full_name`.
+ * `full_name`, then sorted by stars (see `SEARCH_SORT`) so real plugins float
+ * above list/boilerplate noise inside GitHub's 1000-per-query cap.
  *
- * The primary signal is the official `dsh-plugin` topic: a repo tagged with it
- * is a plugin by declaration, regardless of its name, description, or README
- * wording. Two looser fallback queries catch repos that do DSH compatibility
- * without the topic — one that documents a real `dsh plugin add` command in its
- * README, and one whose name or description mentions `dsh-plugin`. A repo whose
- * name merely contains "dsh" (but has no other signal) is deliberately NOT
- * included: name substring is too weak to imply plugin-ness.
+ * A repo is a candidate when any of these hold:
+ * - its README documents a `dsh plugin` command — the substring `"dsh plugin"`
+ *   also matches `dsh plugin add`, `dsh plugin --profile X add`, and the npx
+ *   form `@deepseek-ai/dsh plugin ...`;
+ * - it carries the official `dsh-plugin` topic (a declaration regardless of
+ *   name, description, or README wording);
+ * - its name or description mentions `dsh-plugin`.
+ *
+ * A repo whose name merely contains "dsh" (but has no other signal) is
+ * deliberately NOT included: name substring is too weak to imply plugin-ness.
  */
 const CANDIDATE_QUERIES = [
+  '"dsh plugin" in:readme',
   'topic:dsh-plugin',
-  '"dsh plugin add" in:readme',
   'dsh-plugin in:name,description',
 ] as const
 
@@ -89,10 +100,11 @@ interface ContentsResponse {
 
 /**
  * Real `GithubClient` backed by the Node 24 global `fetch`. Search results
- * are paginated (`per_page=100`, at most 10 pages ≈ 1000 repos) and
- * deduplicated by `full_name`; the `owner` field is normalized to
- * `owner.login`. Every request carries `X-GitHub-Api-Version: 2022-11-28` and,
- * when a token is supplied, `Authorization: Bearer <token>`.
+ * are paginated (`per_page=100`, at most 10 pages ≈ 1000 repos per query),
+ * sorted by stars desc so genuine plugins survive the cap, and deduplicated by
+ * `full_name`; the `owner` field is normalized to `owner.login`. Every request
+ * carries `X-GitHub-Api-Version: 2022-11-28` and, when a token is supplied,
+ * `Authorization: Bearer <token>`.
  */
 export function createGithubClient(): GithubClient {
   async function request(path: string, token?: string): Promise<Response> {
@@ -117,17 +129,19 @@ export function createGithubClient(): GithubClient {
     async fetchCandidates(token) {
       const seen = new Set<string>()
       const repos: RawRepo[] = []
-      for (const query of CANDIDATE_QUERIES) {
+      for (const [qi, query] of CANDIDATE_QUERIES.entries()) {
         for (let page = 1; page <= MAX_PAGES_PER_QUERY; page++) {
           const res = await request(
-            `/search/repositories?q=${encodeURIComponent(query)}&per_page=${SEARCH_PAGE_SIZE}&page=${page}`,
+            `/search/repositories?q=${encodeURIComponent(query)}&sort=${SEARCH_SORT}&order=${SEARCH_ORDER}&per_page=${SEARCH_PAGE_SIZE}&page=${page}`,
             token,
           )
           if (!res.ok) {
-            // The first page of the first query must fail loud: a 401 (bad
-            // token) or 403 (rate limit) would otherwise silently produce an
-            // empty catalog. Later non-OK responses stop that query (partial).
-            if (page === 1) throw new Error(`GitHub search failed: ${res.status}`)
+            // A 401/403 on the very first request must fail loud: a bad token
+            // or hard rate limit would otherwise silently produce an empty
+            // catalog. Any later failure only ends that query (partial results
+            // are kept), so a transient rate limit on a later page degrades
+            // gracefully instead of discarding everything already fetched.
+            if (qi === 0 && page === 1) throw new Error(`GitHub search failed: ${res.status}`)
             break
           }
           const body = (await res.json()) as SearchResponse

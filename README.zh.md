@@ -40,8 +40,9 @@ npm 安装的 `dsh` 都能满足。
 ## 使用
 
 该 tab 基于 `dsh-plugin` topic 数据快照在浏览器端运行。仓库在满足以下任一条件时
-被收录：带有 `dsh-plugin` topic、README 中写明真实的 `dsh plugin add` 命令、
-或名称/描述中提到 `dsh-plugin`——仓库名本身**不必**包含 "dsh"：
+被收录：README 中写明 `dsh plugin` 安装命令、带有 `dsh-plugin` topic、
+或名称/描述中提到 `dsh-plugin`——仓库名本身**不必**包含 "dsh"。候选按 Star
+排序，让真正的插件排在列表/脚手架类仓库之前：
 
 - **搜索** — 按插件名称、作者或描述过滤；同时触发 GitHub 实时搜索（见下文）。
 - **类别多选** — 可同时组合任意数量的功能类别（工具、技能、记忆、视觉、界面皮肤、
@@ -80,9 +81,9 @@ npm 安装的 `dsh` 都能满足。
 ## 数据同步
 
 - `data/plugins.json` 与 `data/meta.json` 由 `sync-data` GitHub Actions 工作流每
-  **6 小时**（cron `0 */6 * * *`）抓取带有 `dsh-plugin` topic、README 写明
-  `dsh plugin add` 命令、或名称/描述提到 `dsh-plugin` 的仓库（仓库名不必包含
-  "dsh"）并重新生成，有变化时自动提交回默认分支。
+  **6 小时**（cron `0 */6 * * *`）抓取 README 写明 `dsh plugin` 命令、带有
+  `dsh-plugin` topic、或名称/描述提到 `dsh-plugin` 的仓库（仓库名不必包含
+  "dsh"），按 Star 排序并重新生成，有变化时自动提交回默认分支。
 - `pnpm sync` 手动触发同一管线（深度检查结果缓存在 `data/.inspect-cache.json`，
   仓库 `pushed_at` 未变时复用）。
 - `data/overrides.json` 用于人工纠偏基于关键词的类别分类，键为 `owner/repo`。
