@@ -55,10 +55,10 @@
 .chip {
   appearance: none;
   border: 1px solid var(--dsw-alias-border-l2);
-  border-radius: 999px;
-  padding: 3px 12px;
-  background: var(--dsw-alias-bg-module-platform);
-  color: var(--dsw-alias-label-secondary);
+  border-radius: 8px;
+  padding: 4px 12px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
   font: inherit;
   font-size: 12px;
   line-height: 18px;
@@ -69,7 +69,6 @@
 .chip:hover {
   border-color: var(--dsw-alias-label-dimmed);
   background: var(--dsw-alias-interactive-bg-hover);
-  color: var(--dsw-alias-label-primary);
 }
 
 .chip:focus-visible {

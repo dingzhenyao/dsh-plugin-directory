@@ -156,11 +156,12 @@
 
 .copyButton {
   flex-shrink: 0;
-  border: 1px solid transparent;
+  appearance: none;
+  border: 1px solid var(--dsw-alias-brand-primary);
   border-radius: 8px;
   padding: 6px 14px;
-  background: var(--dsw-alias-label-primary);
-  color: var(--dsw-alias-bg-layer-3);
+  background: var(--dsw-alias-brand-primary);
+  color: var(--dsw-alias-brand-primary-invert);
   font: inherit;
   font-size: 13px;
   line-height: 1.5;
@@ -169,7 +170,7 @@
 }
 
 .copyButton:hover {
-  background: var(--dsw-alias-label-primary-dimmed);
+  background: var(--dsw-alias-label-primary);
 }
 
 .copyButton:focus-visible {
