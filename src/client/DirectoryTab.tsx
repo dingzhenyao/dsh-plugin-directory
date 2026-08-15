@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
 import css from './DirectoryTab.module.css'
-import { StatsDashboard } from './StatsDashboard.tsx'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
 import { CDN_BASE, fetchRemote, type Snapshot } from './data.ts'
@@ -254,7 +253,6 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                   </div>
                 </section>
               ) : null}
-              <StatsDashboard meta={snapshot.meta} lang={lang} t={t} />
             </>
           )
       ) : null}

@@ -21,9 +21,11 @@ export interface PluginCardProps {
 function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
   const [copied, setCopied] = useState(false)
   const command = entry.install.command
-  // Install button only when the plugin's own README documented a real `dsh`
-  // install command; derived/guessed commands are intentionally not shown.
-  const showInstall = entry.install.source === 'readme' && command !== null
+  // Every entry carries at least the git-install fallback
+  // (`dsh plugin add github:owner/repo`), so the install button is always the
+  // direct install channel: README-extracted when available, otherwise the
+  // canonical derived command.
+  const showInstall = command !== null
 
   // Flip the button back to its idle label shortly after a successful copy;
   // the timer is torn down on unmount or when the confirmation clears.
