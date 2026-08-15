@@ -6,6 +6,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { DirectoryTab, type DirectoryTabInjected } from './DirectoryTab.tsx'
 import { FALLBACK } from './data.ts'
 import { en, zh, type DirectoryLocaleKey } from './locales.ts'
+import { injectStyles } from './styles.ts'
 
 export type { DirectoryTabInjected, DirectoryTabProps } from './DirectoryTab.tsx'
 export type { DirectoryLocaleKey } from './locales.ts'
@@ -25,7 +26,10 @@ export const inject = ['slots', 'locale']
 
 /** Contribute the plugin directory tab to the Plugins settings section. */
 export function apply(ctx: ClientContext): void {
-  ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-plugin-directory: dictionaries')
+  ctx.effect(() => {
+    injectStyles()
+    return ctx.locale.register(NS, { zh, en })
+  }, 'dsh-plugin-directory: styles + dictionaries')
 
   const t = ctx.locale.bind(NS)
   // The bundled snapshot is the offline fallback; the tab refreshes it from

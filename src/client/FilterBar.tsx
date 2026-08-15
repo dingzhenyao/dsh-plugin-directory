@@ -4,7 +4,6 @@ import type { FunctionCategory, InstallForm } from '../data/types.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL } from '../data/constants.ts'
 import type { DirectoryLocaleKey } from './locales.ts'
 import type { FilterControls, GroupBy, SortKey } from './filter.ts'
-import css from './FilterBar.module.css'
 
 /**
  * Search + user-selectable classification/sort controls. The search query is
@@ -71,9 +70,9 @@ export function FilterBar({ query, lang, t, controls, onQueryChange, onControlsC
   }
 
   return (
-    <div className={css.bar} data-filter-bar>
+    <div className="dshpd-bar" data-filter-bar>
       <input
-        className={css.search}
+        className="dshpd-search"
         type="search"
         data-search
         value={query}
@@ -81,14 +80,14 @@ export function FilterBar({ query, lang, t, controls, onQueryChange, onControlsC
         aria-label={t('searchPlaceholder')}
         onChange={event => onQueryChange(event.target.value)}
       />
-      <div className={css.row}>
-        <span className={css.rowLabel}>{t('filterCategory')}</span>
-        <div className={css.chips} role="group" aria-label={t('filterCategory')}>
+      <div className="dshpd-row">
+        <span className="dshpd-rowLabel">{t('filterCategory')}</span>
+        <div className="dshpd-chips" role="group" aria-label={t('filterCategory')}>
           {CATEGORY_KEYS.map(category => (
             <button
               key={category}
               type="button"
-              className={css.chip}
+              className="dshpd-chip"
               data-category-chip={category}
               aria-pressed={controls.categories.has(category)}
               onClick={() => toggleCategory(category)}
@@ -98,14 +97,14 @@ export function FilterBar({ query, lang, t, controls, onQueryChange, onControlsC
           ))}
         </div>
       </div>
-      <div className={css.row}>
-        <span className={css.rowLabel}>{t('filterInstallForm')}</span>
-        <div className={css.chips} role="group" aria-label={t('filterInstallForm')}>
+      <div className="dshpd-row">
+        <span className="dshpd-rowLabel">{t('filterInstallForm')}</span>
+        <div className="dshpd-chips" role="group" aria-label={t('filterInstallForm')}>
           {FORM_KEYS.map(form => (
             <button
               key={form}
               type="button"
-              className={css.chip}
+              className="dshpd-chip"
               data-form-chip={form}
               aria-pressed={controls.installForms.has(form)}
               onClick={() => toggleInstallForm(form)}
@@ -115,14 +114,14 @@ export function FilterBar({ query, lang, t, controls, onQueryChange, onControlsC
           ))}
         </div>
       </div>
-      <div className={css.row}>
-        <span className={css.rowLabel}>{t('groupBy')}</span>
-        <div className={css.chips} role="group" aria-label={t('groupBy')}>
+      <div className="dshpd-row">
+        <span className="dshpd-rowLabel">{t('groupBy')}</span>
+        <div className="dshpd-chips" role="group" aria-label={t('groupBy')}>
           {GROUP_BY_KEYS.map(groupBy => (
             <button
               key={groupBy}
               type="button"
-              className={css.chip}
+              className="dshpd-chip"
               data-group-by={groupBy}
               aria-pressed={controls.groupBy === groupBy}
               onClick={() => onControlsChange({ ...controls, groupBy })}
@@ -132,14 +131,14 @@ export function FilterBar({ query, lang, t, controls, onQueryChange, onControlsC
           ))}
         </div>
       </div>
-      <div className={css.row}>
-        <span className={css.rowLabel}>{t('sort')}</span>
-        <div className={css.chips} role="group" aria-label={t('sort')}>
+      <div className="dshpd-row">
+        <span className="dshpd-rowLabel">{t('sort')}</span>
+        <div className="dshpd-chips" role="group" aria-label={t('sort')}>
           {SORT_KEYS.map(sort => (
             <button
               key={sort}
               type="button"
-              className={css.chip}
+              className="dshpd-chip"
               data-sort={sort}
               aria-pressed={controls.sort === sort}
               onClick={() => onControlsChange({ ...controls, sort })}

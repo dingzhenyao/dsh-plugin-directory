@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { InjectFace, PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { MetaFile, PluginEntry } from '../data/types.ts'
-import css from './DirectoryTab.module.css'
 import { FilterBar } from './FilterBar.tsx'
 import { PluginCard } from './PluginCard.tsx'
 import { CDN_BASE, fetchRemote, type Snapshot } from './data.ts'
@@ -165,24 +164,24 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
   const syncedAt = snapshot.meta.syncedAt.slice(0, 10)
 
   return (
-    <div className={css.root} data-directory lang={lang} aria-busy={viewStatus === 'loading'}>
-      {viewStatus === 'loading' ? <p className={css.status}>{t('loading')}</p> : null}
+    <div className="dshpd-root" data-directory lang={lang} aria-busy={viewStatus === 'loading'}>
+      {viewStatus === 'loading' ? <p className="dshpd-status">{t('loading')}</p> : null}
       {viewStatus === 'error' ? (
-        <div className={css.failure}>
+        <div className="dshpd-failure">
           <p role="alert">{t('error')}</p>
           <button type="button" onClick={retry}>{t('retry')}</button>
         </div>
       ) : null}
       {viewStatus === 'ready' ? (
         list.length === 0
-          ? <p className={css.status}>{t('empty')}</p>
+          ? <p className="dshpd-status">{t('empty')}</p>
           : (
             <>
-              <div className={css.headRow}>
-                <p className={css.status}>{t('repoCount', { count: String(list.length) })}</p>
+              <div className="dshpd-headRow">
+                <p className="dshpd-status">{t('repoCount', { count: String(list.length) })}</p>
                 <button
                   type="button"
-                  className={css.refresh}
+                  className="dshpd-refresh"
                   data-refresh
                   onClick={refresh}
                   disabled={refreshState === 'refreshing'}
@@ -190,7 +189,7 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                   {refreshState === 'refreshing' ? t('refreshing') : t('refresh')}
                 </button>
               </div>
-              <p className={css.status} data-synced>
+              <p className="dshpd-status" data-synced>
                 {t('syncedAt', { time: syncedAt })}
                 {refreshState === 'failed' ? ` · ${t('refreshFailed')}` : ''}
               </p>
@@ -202,32 +201,32 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                 onQueryChange={setQuery}
                 onControlsChange={setControls}
               />
-              <p className={css.status}>
+              <p className="dshpd-status">
                 {t('visibleCount', { count: String(visible) })}
                 {!isFiltering && !showAll ? ` · ${t('topBanner', { count: String(TOP_N) })}` : ''}
               </p>
-              <div className={css.results} data-results>
-                <div className={css.cardList}>
+              <div className="dshpd-results" data-results>
+                <div className="dshpd-cardList">
                   {pageEntries.map(entry => (
                     <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
                   ))}
                 </div>
-                {pageEntries.length === 0 ? <p className={css.status}>{t('empty')}</p> : null}
-                <nav className={css.pager} aria-label={t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}>
+                {pageEntries.length === 0 ? <p className="dshpd-status">{t('empty')}</p> : null}
+                <nav className="dshpd-pager" aria-label={t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}>
                   <button
                     type="button"
-                    className={css.pageButton}
+                    className="dshpd-pageButton"
                     disabled={safePage === 0}
                     onClick={() => setPage(value => Math.max(0, value - 1))}
                   >
                     {t('prev')}
                   </button>
-                  <span className={css.pageIndicator} data-page-indicator>
+                  <span className="dshpd-pageIndicator" data-page-indicator>
                     {t('pageOf', { page: String(safePage + 1), total: String(totalPages) })}
                   </span>
                   <button
                     type="button"
-                    className={css.pageButton}
+                    className="dshpd-pageButton"
                     disabled={safePage >= totalPages - 1}
                     onClick={() => setPage(value => Math.min(totalPages - 1, value + 1))}
                   >
@@ -236,17 +235,17 @@ export function DirectoryTab({ t, lang, plugins, meta }: DirectoryTabProps): Rea
                 </nav>
               </div>
               {!isFiltering && !showAll ? (
-                <button type="button" className={css.browseAll} onClick={() => setShowAll(true)}>
+                <button type="button" className="dshpd-browseAll" onClick={() => setShowAll(true)}>
                   {t('browseAll', { count: String(flat.length) })}
                 </button>
               ) : null}
-              {isLiveActive && liveState === 'loading' ? <p className={css.status}>{t('liveLoading')}</p> : null}
-              {isLiveActive && liveState === 'error' ? <p className={css.status} role="status">{t('liveRateLimited')}</p> : null}
+              {isLiveActive && liveState === 'loading' ? <p className="dshpd-status">{t('liveLoading')}</p> : null}
+              {isLiveActive && liveState === 'error' ? <p className="dshpd-status" role="status">{t('liveRateLimited')}</p> : null}
               {isLiveActive && liveState === 'ready' && liveVisible.length > 0 ? (
-                <section className={css.liveSection} data-live-section>
-                  <h3 className={css.liveTitle}>{t('liveTitle')}</h3>
-                  <p className={css.liveHint}>{t('liveHint')}</p>
-                  <div className={css.cardList}>
+                <section className="dshpd-liveSection" data-live-section>
+                  <h3 className="dshpd-liveTitle">{t('liveTitle')}</h3>
+                  <p className="dshpd-liveHint">{t('liveHint')}</p>
+                  <div className="dshpd-cardList">
                     {liveVisible.map(entry => (
                       <PluginCard key={entry.id} entry={entry} lang={lang} t={t} />
                     ))}

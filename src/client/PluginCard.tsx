@@ -2,7 +2,6 @@ import { memo, useEffect, useState, type ReactNode } from 'react'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { PluginEntry } from '../data/types.ts'
 import { CATEGORY_LABEL, INSTALL_FORM_LABEL } from '../data/constants.ts'
-import css from './PluginCard.module.css'
 
 /** How long the install button stays in its "copied" confirmation state. */
 const COPIED_MS = 1600
@@ -45,17 +44,17 @@ function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
   }
 
   return (
-    <article className={css.card} data-plugin-card>
-      <header className={css.header}>
-        <h4 className={css.title}>
+    <article className="dshpd-card" data-plugin-card>
+      <header className="dshpd-header">
+        <h4 className="dshpd-title">
           <a href={entry.htmlUrl} target="_blank" rel="noopener noreferrer" data-owner-link>
             {entry.name}
           </a>
         </h4>
-        <span className={css.owner} data-owner>{entry.owner}</span>
+        <span className="dshpd-owner" data-owner>{entry.owner}</span>
       </header>
-      <p className={css.description}>{entry.description ?? t('noDescription')}</p>
-      <ul className={css.meta}>
+      <p className="dshpd-description">{entry.description ?? t('noDescription')}</p>
+      <ul className="dshpd-meta">
         <li data-meta="stars">
           <span>{t('stars')}</span>
           <strong>{entry.stars}</strong>
@@ -67,14 +66,14 @@ function PluginCardImpl({ entry, lang, t }: PluginCardProps): ReactNode {
           <span>{entry.pushedAt.slice(0, 10)}</span>
         </li>
       </ul>
-      <div className={css.badges}>
-        <span className={css.badge} data-badge="category">{CATEGORY_LABEL[entry.category][lang]}</span>
-        <span className={css.badge} data-badge="installForm" data-form={entry.install.form}>{INSTALL_FORM_LABEL[entry.install.form][lang]}</span>
+      <div className="dshpd-badges">
+        <span className="dshpd-badge" data-badge="category">{CATEGORY_LABEL[entry.category][lang]}</span>
+        <span className="dshpd-badge" data-badge="installForm" data-form={entry.install.form}>{INSTALL_FORM_LABEL[entry.install.form][lang]}</span>
       </div>
       {showInstall ? (
-        <div className={css.install}>
-          <code className={css.command} data-install-command>{command}</code>
-          <button type="button" className={css.copyButton} data-install-button onClick={copy}>
+        <div className="dshpd-install">
+          <code className="dshpd-command" data-install-command>{command}</code>
+          <button type="button" className="dshpd-copyButton" data-install-button onClick={copy}>
             {copied ? t('copied') : t('install')}
           </button>
         </div>
