@@ -48,6 +48,9 @@ const TOP_N = 50
 /** Debounce the search query by this many milliseconds (local filter + live). */
 const QUERY_DEBOUNCE_MS = 250
 
+/** Re-read the harness Loader inventory (real install status) every this many ms. */
+const INVENTORY_POLL_MS = 30_000
+
 /** Render the plugin directory tab with loading / empty / error seats. */
 export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: DirectoryTabProps): ReactNode {
   const [viewStatus, setViewStatus] = useState<ViewStatus>('loading')
@@ -98,7 +101,7 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
     return () => { current = false }
   }, [pluginManager])
 
-  // Sync the real harness Loader inventory on mount, then on demand.
+  // Manual sync (button): flips the sync button to its loading state.
   const syncInventory = useCallback((): void => {
     setInventoryStatus('loading')
     void pluginManager.inventory().then(
@@ -107,15 +110,20 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
     )
   }, [pluginManager])
 
+  // Initial load + periodic silent re-sync, torn down on unmount. The periodic
+  // poll keeps the real install status fresh without flipping the button.
   useEffect(() => {
     let cancelled = false
-    // Re-run the load through the effect lifecycle so an unmount cannot leave
-    // a stale state write behind; syncInventory() itself is the click handler.
-    void pluginManager.inventory().then(
-      (rows) => { if (!cancelled) { setInventory(rows); setInventoryStatus('ready') } },
-      () => { if (!cancelled) setInventoryStatus('error') },
-    )
-    return () => { cancelled = true }
+    const load = (silent: boolean): void => {
+      if (!silent) setInventoryStatus('loading')
+      void pluginManager.inventory().then(
+        (rows) => { if (!cancelled) { setInventory(rows); setInventoryStatus('ready') } },
+        () => { if (!cancelled) setInventoryStatus('error') },
+      )
+    }
+    load(false)
+    const id = window.setInterval(() => load(true), INVENTORY_POLL_MS)
+    return () => { cancelled = true; window.clearInterval(id) }
   }, [pluginManager])
 
   // Map each ledger entry to its real install status.

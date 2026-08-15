@@ -41,4 +41,17 @@ describe('DirectoryTab', () => {
     expect(shell?.getAttribute('lang')).toBe('en')
     expect(await screen.findByText(en.empty)).toBeTruthy()
   })
+
+  it('re-reads the Loader inventory on a periodic timer', async () => {
+    vi.useFakeTimers()
+    const inventory = vi.fn().mockResolvedValue([])
+    const manager = { ...pluginManager, inventory }
+    render(<DirectoryTab t={t} lang="en" plugins={[] as PluginEntry[]} meta={META} pluginManager={manager} />)
+    // Initial load fires synchronously on mount.
+    expect(inventory).toHaveBeenCalledTimes(1)
+    // Advance past one poll interval: the periodic poll fires a second time.
+    await vi.advanceTimersByTimeAsync(30_000)
+    expect(inventory).toHaveBeenCalledTimes(2)
+    vi.useRealTimers()
+  })
 })

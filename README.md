@@ -142,7 +142,8 @@ Typert Remote (`ctx.remote.pluginManager.*`) from the browser:
   installed**, or **unknown** (inventory unavailable). Matching is by the
   Loader `moduleName` against the ledger id/source, with a unique-basename
   fallback so an npm install of the same project still lines up with a
-  recorded git source.
+  recorded git source. The inventory is re-read automatically every 30 seconds
+  (and on demand via the **Sync status** button).
 
 The ledger is bookkeeping only: it records which plugins you triggered an
 install for (plus manual additions), and it **does not** actually run
