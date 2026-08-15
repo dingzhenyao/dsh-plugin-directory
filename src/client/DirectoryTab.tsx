@@ -148,10 +148,12 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
     return () => { current = false }
   }, [plugins, meta, request])
 
-  // Refresh the snapshot from the CDN once on mount, then on demand.
+  // Refresh the snapshot from the CDN once on mount, then on demand. The
+  // bundled `meta.syncedAt` is passed so a CDN edge serving an older snapshot
+  // (a lagging branch cache) is rejected instead of rolling the directory back.
   const refresh = useCallback(() => {
     setRefreshState('refreshing')
-    void fetchRemote(CDN_BASE).then((remote) => {
+    void fetchRemote(CDN_BASE, meta.syncedAt).then((remote) => {
       if (remote !== null) {
         setSnapshot(remote)
         setRefreshState('idle')
@@ -159,7 +161,7 @@ export function DirectoryTab({ t, lang, plugins, meta, pluginManager }: Director
         setRefreshState('failed')
       }
     })
-  }, [])
+  }, [meta.syncedAt])
 
   useEffect(() => { refresh() }, [refresh])
 

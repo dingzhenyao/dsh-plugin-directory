@@ -114,12 +114,13 @@ guessed install button.
 ## Runtime data refresh & live search
 
 - **CDN refresh** — on open, the tab fetches the latest snapshot from
-  jsDelivr (`https://cdn.jsdelivr.net/gh/dingzhenyao/dsh-plugin-directory@main/data`);
-  if it succeeds it replaces the bundled snapshot and shows the last sync
-  date, and if it fails (offline) it silently keeps the bundled snapshot.
-  The owner (`dingzhenyao`) is the GitHub account hosting the
-  `dsh-plugin-directory` repository — a single fixed value baked in at build
-  time, shared by every installer (not per-installer). jsDelivr serves GitHub
+  GitHub raw (`https://raw.githubusercontent.com/dingzhenyao/dsh-plugin-directory/main/data`);
+  if it succeeds (and is no older than the bundled snapshot) it replaces the
+  bundled snapshot and shows the last sync date, and if it fails (offline) it
+  silently keeps the bundled snapshot. The owner (`dingzhenyao`) is the GitHub
+  account hosting the `dsh-plugin-directory` repository — a single fixed value
+  baked in at build time, shared by every installer (not per-installer).
+  `raw.githubusercontent.com` follows the branch within minutes and serves
   files with `Access-Control-Allow-Origin: *`.
 - **Live search** — typing a query also queries the GitHub Search API for
   `topic:dsh-plugin` repositories matching the query (debounced, 20 results),
@@ -205,9 +206,10 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   per-entry installed/disabled/failed badge is read live from the Loader
   inventory via **Sync status**, so an install performed outside this
   directory only shows up if its `moduleName` matches a recorded entry.
-- **CDN cache delay** — jsDelivr caches the snapshot for ~12h, so a fresh CI
-  commit can take up to ~18h to reach the CDN refresh; live search covers the
-  gap for newest repos.
+- **CDN cache delay** — `raw.githubusercontent.com` serves the branch with a
+  ~5-minute cache, so a fresh CI commit reaches the CDN refresh within minutes
+  (and a stale edge cache is rejected in favor of the bundled snapshot); live
+  search covers the gap for the very newest repos.
 - **Unauthenticated search quota** — the live-search feature queries GitHub's
   search API from the browser (unauthenticated, 10 requests/minute); it is
   debounced and degrades to local results on rate-limit. The sync pipeline

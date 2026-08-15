@@ -85,6 +85,22 @@ describe('CDN hot update', () => {
     expect(screen.getByText(zh.syncedAt.replace('{time}', '2026-08-15'))).toBeTruthy()
   })
 
+  it('rejects a CDN snapshot older than the bundled one (stale branch cache)', async () => {
+    const remotePlugins = [pluginFixture({ id: 'remote/old', name: 'RemoteOld', stars: 999 })]
+    const remoteMeta = { ...META, total: 1, syncedAt: '2026-08-13T00:00:00.000Z' }
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/plugins.json')) return jsonResponse(remotePlugins)
+      if (url.endsWith('/meta.json')) return jsonResponse(remoteMeta)
+      return { ok: false, json: async () => ({}) } as unknown as Response
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    render(<DirectoryTab t={makeT(zh)} lang="zh" plugins={[pluginFixture({ id: 'local/a', name: 'LocalA' })]} meta={META} pluginManager={pluginManager} />)
+
+    await screen.findByText('LocalA')
+    expect(screen.queryByText('RemoteOld')).toBeNull()
+  })
+
   it('falls back to the bundled snapshot when the CDN fetch fails', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
 

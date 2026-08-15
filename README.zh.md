@@ -91,12 +91,13 @@ npm 安装的 `dsh` 都能满足。
 
 ## 运行时刷新与实时搜索
 
-- **CDN 刷新** — 打开时，tab 从 jsDelivr 拉取最新快照
-  （`https://cdn.jsdelivr.net/gh/dingzhenyao/dsh-plugin-directory@main/data`）；
-  成功则替换内置快照并显示上次同步日期，失败（离线）则静默保留内置快照。
-  owner（`dingzhenyao`）是托管 `dsh-plugin-directory` 仓库的 GitHub 账户名，
-  为**单一固定值**、构建时写入、所有安装者共用（非每用户各自账户）。jsDelivr
-  对 GitHub 文件返回 `Access-Control-Allow-Origin: *`。
+- **CDN 刷新** — 打开时，tab 从 GitHub raw 拉取最新快照
+  （`https://raw.githubusercontent.com/dingzhenyao/dsh-plugin-directory/main/data`）；
+  成功（且不早于内置快照）则替换内置快照并显示上次同步日期，失败（离线）则静默
+  保留内置快照。owner（`dingzhenyao`）是托管 `dsh-plugin-directory` 仓库的
+  GitHub 账户名，为**单一固定值**、构建时写入、所有安装者共用（非每用户各自
+  账户）。`raw.githubusercontent.com` 分钟级跟随分支，且返回
+  `Access-Control-Allow-Origin: *`。
 - **实时搜索** — 输入搜索词时同时向 GitHub Search API 查询 `topic:dsh-plugin`
   匹配仓库（防抖、20 条），去重后以「实时结果」区块追加展示。实时结果无 README
   检测，因此不显示安装按钮；限流/失败时降级为仅本地结果并给出提示。
@@ -165,8 +166,9 @@ NODE_OPTIONS=--require=./scripts/vitest-sandbox.cjs pnpm test
   写入宿主数据文件，但不把 harness 的真实安装状态回写；每条上的已安装/已禁用/加载
   失败徽章通过「同步状态」从 Loader 清单实时读取，因此本目录之外的安装只有在
   `moduleName` 匹配到某条记录时才会显示出来。
-- **CDN 缓存延迟** — jsDelivr 对快照缓存约 12 小时，CI 新提交最长约 18 小时才会
-  反映到 CDN 刷新；最新仓库由实时搜索补齐。
+- **CDN 缓存延迟** — `raw.githubusercontent.com` 对分支缓存约 5 分钟，CI 新提交
+  数分钟内即可反映到 CDN 刷新（过期的边缘缓存会被拒绝、回退到内置快照）；最新
+  仓库由实时搜索补齐。
 - **未认证搜索限额** — 实时搜索从浏览器直连 GitHub 搜索 API（未认证，10 次/分），
   已做防抖，限流时降级为本地结果；同步管线在 CI 中带 `GITHUB_TOKEN`（见
   `.github/workflows/sync.yml`）。
