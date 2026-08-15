@@ -41,16 +41,21 @@ const SEARCH_PAGE_SIZE = 100
 const MAX_PAGES_PER_QUERY = 3
 
 /**
- * Stage-one candidate queries. Each is scoped to the `dsh-plugin` topic and
- * uses a server-side `in:` qualifier so only repos that look like actual
- * plugins survive — high-star "finished software" that merely mentions
- * "supports DeepSeek Harness" in its description is excluded here, before any
- * per-repo inspection.
+ * Stage-one candidate queries. Results are unioned and deduplicated by
+ * `full_name`.
+ *
+ * The primary signal is the official `dsh-plugin` topic: a repo tagged with it
+ * is a plugin by declaration, regardless of its name, description, or README
+ * wording. Two looser fallback queries catch repos that do DSH compatibility
+ * without the topic — one that documents a real `dsh plugin add` command in its
+ * README, and one whose name or description mentions `dsh-plugin`. A repo whose
+ * name merely contains "dsh" (but has no other signal) is deliberately NOT
+ * included: name substring is too weak to imply plugin-ness.
  */
 const CANDIDATE_QUERIES = [
-  'topic:dsh-plugin "dsh plugin add" in:readme',
-  'topic:dsh-plugin dsh in:name',
-  'topic:dsh-plugin "dsh plugin" in:description',
+  'topic:dsh-plugin',
+  '"dsh plugin add" in:readme',
+  'dsh-plugin in:name,description',
 ] as const
 
 /** Minimal shapes of the GitHub REST payloads we read. */
