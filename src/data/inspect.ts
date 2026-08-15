@@ -46,11 +46,12 @@ export function installFromPackageJson(pkg: PackageManifest, id: string): Instal
 
 /**
  * Matches a `dsh plugin add <target>` invocation, optionally prefixed by
- * `pnpm ` and/or a `--profile <name>` flag. Capture group 1 is the single
+ * `pnpm ` and/or a `--profile <name>` flag. Capture group 1 is the optional
+ * `--profile` value (undefined when the flag is absent); group 2 is the single
  * whitespace-free install target (npm package name, `github:owner/repo`, or a
  * `.dsh-plugin` repo reference).
  */
-const DSH_ADD_RE = /(?:pnpm\s+)?dsh\s+plugin(?:\s+--profile\s+\S+)?\s+add\s+(\S+)/
+const DSH_ADD_RE = /(?:pnpm\s+)?dsh\s+plugin(?:\s+--profile\s+(\S+))?\s+add\s+(\S+)/
 
 /**
  * Matches a bare `.dsh-plugin` repository install reference (the config.yaml
@@ -65,18 +66,26 @@ const COMMAND_TRAIL_RE = /[`.,;:)\]}>]+$/
 /**
  * Extracts a real `dsh` install command from one README line, or `null` when
  * the line only mentions the command in prose. Accepts:
- *   - `dsh plugin add <target>`
- *   - `dsh plugin --profile <name> add <target>`
+ *   - `dsh plugin add <target>`                          (no profile)
+ *   - `dsh plugin --profile <name> add <target>`         (profile preserved)
  *   - `pnpm dsh plugin [--profile <name>] add <target>`
+ *   - `npx -y @deepseek-ai/dsh plugin [--profile <name>] add <target>`
  *   - a bare `github:...&path:/.dsh-plugin` reference
  * A real invocation has exactly one whitespace-free target token; prose like
  * "via `dsh plugin add` (each declares ...)" has no target and is rejected.
+ * The `--profile` flag is kept when present — it selects the install profile,
+ * which matters for e.g. `web` client plugins — and omitted otherwise.
  */
 function readmeCommand(line: string): string | null {
   const add = line.match(DSH_ADD_RE)
-  if (add?.[1]) {
-    const target = add[1].replace(COMMAND_TRAIL_RE, '')
-    if (target !== '') return `dsh plugin add ${target}`
+  if (add) {
+    const profile = add[1]
+    const target = (add[2] ?? '').replace(COMMAND_TRAIL_RE, '')
+    if (target !== '') {
+      return profile !== undefined
+        ? `dsh plugin --profile ${profile} add ${target}`
+        : `dsh plugin add ${target}`
+    }
   }
   const ref = line.match(DSH_PLUGIN_REF_RE)
   if (ref?.[1]) return `dsh plugin add ${ref[1]}`

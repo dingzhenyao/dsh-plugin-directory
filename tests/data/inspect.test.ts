@@ -105,9 +105,9 @@ describe('installFromReadme', () => {
     expect(info.source).toBe('readme')
   })
 
-  it('extracts a `--profile` invocation', () => {
+  it('extracts a `--profile` invocation and preserves the profile', () => {
     const info = installFromReadme('dsh plugin --profile web add @scope/foo', 'a/b', 'bundle')
-    expect(info.command).toBe('dsh plugin add @scope/foo')
+    expect(info.command).toBe('dsh plugin --profile web add @scope/foo')
     expect(info.source).toBe('readme')
   })
 
@@ -117,8 +117,14 @@ describe('installFromReadme', () => {
     expect(info.source).toBe('readme')
   })
 
-  it('extracts a `pnpm dsh plugin --profile ... add` invocation', () => {
+  it('extracts a `pnpm dsh plugin --profile ... add` invocation and preserves the profile', () => {
     const info = installFromReadme('pnpm dsh plugin --profile web add @scope/foo', 'a/b', 'bundle')
+    expect(info.command).toBe('dsh plugin --profile web add @scope/foo')
+    expect(info.source).toBe('readme')
+  })
+
+  it('extracts an npx `@deepseek-ai/dsh plugin add` invocation without --profile', () => {
+    const info = installFromReadme('npx -y @deepseek-ai/dsh plugin add @scope/foo', 'a/b', 'client')
     expect(info.command).toBe('dsh plugin add @scope/foo')
     expect(info.source).toBe('readme')
   })

@@ -66,8 +66,8 @@ npm 安装的 `dsh` 都能满足。
    并保留该行作为片段。可识别的形式包括 `dsh plugin add <target>`、
    `dsh plugin --profile <name> add <target>`、
    `pnpm dsh plugin [--profile <name>] add <target>`，以及裸 `.dsh-plugin`
-   引用（`github:<owner>/<repo>#<ref>&path:/.dsh-plugin`）；仅在行文中提及
-   而没有具体目标的，忽略。
+   引用（`github:<owner>/<repo>#<ref>&path:/.dsh-plugin`）；`--profile` 存在时
+   会保留。仅在行文中提及而没有具体目标的，忽略。
 2. **`package.json` 信号** — README 中没有安装命令，但插件清单声明了
    `dsh.client` 或 `dsh.bundle` 时，使用其 npm 包名：`dsh plugin add <package-name>`。
 3. **`.dsh-plugin` 目录** — 仓库型插件（无 client/bundle 清单）从仓库安装：

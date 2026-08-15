@@ -81,7 +81,8 @@ It is derived in priority order:
    `dsh plugin --profile <name> add <target>`,
    `pnpm dsh plugin [--profile <name>] add <target>`, and a bare
    `.dsh-plugin` reference (`github:<owner>/<repo>#<ref>&path:/.dsh-plugin`).
-   Prose mentions without a concrete target are ignored.
+   The `--profile` flag is preserved when present. Prose mentions without a
+   concrete target are ignored.
 2. **`package.json` signals** — when the README has no install command but the
    plugin's manifest declares `dsh.client` or `dsh.bundle`, the npm package
    name is used: `dsh plugin add <package-name>`.
