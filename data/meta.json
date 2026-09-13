@@ -1,36 +1,36 @@
 {
-  "syncedAt": "2026-09-13T15:50:13.519Z",
-  "total": 1987,
+  "syncedAt": "2026-09-13T20:29:47.733Z",
+  "total": 1989,
   "byCategory": {
-    "tool": 43,
+    "tool": 44,
     "skill": 240,
     "memory": 139,
     "vision": 115,
-    "ui-skin": 161,
+    "ui-skin": 160,
     "mcp": 70,
-    "orchestration": 43,
-    "cli-tui": 160,
-    "web": 293,
-    "agent": 198,
-    "other": 525
+    "orchestration": 44,
+    "cli-tui": 158,
+    "web": 295,
+    "agent": 200,
+    "other": 524
   },
   "byInstallForm": {
-    "bundle": 0,
+    "bundle": 1,
     "repo": 0,
-    "client": 0,
-    "unknown": 1987
+    "client": 2,
+    "unknown": 1986
   },
   "byLanguage": {
-    "TypeScript": 769,
-    "Go": 24,
-    "Python": 168,
+    "Python": 167,
+    "TypeScript": 770,
     "JavaScript": 841,
+    "Go": 24,
     "HTML": 26,
     "Rust": 36,
     "Swift": 5,
     "other": 59,
-    "Kotlin": 15,
-    "Shell": 16,
+    "Kotlin": 16,
+    "Shell": 17,
     "Vue": 1,
     "C#": 6,
     "PowerShell": 10,
@@ -46,7 +46,7 @@
     "1000+": 90,
     "200-999": 133,
     "50-199": 274,
-    "10-49": 730,
-    "0-9": 760
+    "10-49": 733,
+    "0-9": 759
   }
 }
