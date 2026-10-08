@@ -1,37 +1,37 @@
 {
-  "syncedAt": "2026-10-08T13:02:34.922Z",
-  "total": 2004,
+  "syncedAt": "2026-10-08T23:04:53.411Z",
+  "total": 2002,
   "byCategory": {
     "tool": 43,
     "skill": 262,
-    "memory": 142,
-    "vision": 110,
-    "ui-skin": 163,
+    "memory": 139,
+    "vision": 111,
+    "ui-skin": 164,
     "mcp": 75,
-    "orchestration": 53,
-    "cli-tui": 163,
-    "web": 256,
+    "orchestration": 52,
+    "cli-tui": 161,
+    "web": 258,
     "agent": 208,
     "other": 529
   },
   "byInstallForm": {
-    "bundle": 2,
+    "bundle": 3,
     "repo": 0,
-    "client": 0,
-    "unknown": 2002
+    "client": 2,
+    "unknown": 1997
   },
   "byLanguage": {
-    "TypeScript": 747,
-    "Python": 172,
-    "JavaScript": 868,
+    "TypeScript": 746,
     "Go": 23,
-    "Rust": 40,
+    "Python": 171,
+    "JavaScript": 869,
     "Shell": 17,
-    "HTML": 23,
+    "Rust": 39,
+    "HTML": 24,
     "Swift": 6,
     "other": 62,
     "Kotlin": 14,
-    "PowerShell": 10,
+    "PowerShell": 9,
     "Vue": 1,
     "C++": 3,
     "Objective-C++": 1,
@@ -47,9 +47,9 @@
     "MoonBit": 1
   },
   "byStarBucket": {
-    "1000+": 104,
-    "200-999": 176,
-    "50-199": 339,
+    "1000+": 105,
+    "200-999": 175,
+    "50-199": 337,
     "10-49": 696,
     "0-9": 689
   }
