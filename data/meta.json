@@ -1,18 +1,18 @@
 {
-  "syncedAt": "2026-10-09T22:25:13.672Z",
+  "syncedAt": "2026-10-10T04:59:33.332Z",
   "total": 2005,
   "byCategory": {
-    "tool": 46,
-    "skill": 260,
-    "memory": 143,
-    "vision": 109,
-    "ui-skin": 163,
+    "tool": 47,
+    "skill": 261,
+    "memory": 141,
+    "vision": 110,
+    "ui-skin": 164,
     "mcp": 77,
     "orchestration": 53,
     "cli-tui": 162,
-    "web": 256,
-    "agent": 208,
-    "other": 528
+    "web": 257,
+    "agent": 210,
+    "other": 523
   },
   "byInstallForm": {
     "bundle": 0,
@@ -47,10 +47,10 @@
     "MoonBit": 1
   },
   "byStarBucket": {
-    "1000+": 106,
-    "200-999": 180,
+    "1000+": 107,
+    "200-999": 181,
     "50-199": 339,
-    "10-49": 694,
-    "0-9": 686
+    "10-49": 693,
+    "0-9": 685
   }
 }
