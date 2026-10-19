@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-10-19T12:33:22.735Z",
+  "syncedAt": "2026-10-19T22:07:10.839Z",
   "total": 2004,
   "byCategory": {
     "tool": 46,
@@ -8,9 +8,9 @@
     "vision": 103,
     "ui-skin": 161,
     "mcp": 78,
-    "orchestration": 51,
-    "cli-tui": 158,
-    "web": 254,
+    "orchestration": 52,
+    "cli-tui": 159,
+    "web": 252,
     "agent": 216,
     "other": 537
   },
@@ -21,11 +21,11 @@
     "unknown": 2003
   },
   "byLanguage": {
-    "TypeScript": 731,
-    "JavaScript": 877,
+    "TypeScript": 732,
+    "JavaScript": 875,
     "Go": 23,
-    "Python": 179,
-    "HTML": 24,
+    "Python": 181,
+    "HTML": 23,
     "Rust": 38,
     "Swift": 6,
     "other": 64,
@@ -49,8 +49,8 @@
   "byStarBucket": {
     "1000+": 110,
     "200-999": 206,
-    "50-199": 366,
-    "10-49": 678,
-    "0-9": 644
+    "50-199": 367,
+    "10-49": 680,
+    "0-9": 641
   }
 }
