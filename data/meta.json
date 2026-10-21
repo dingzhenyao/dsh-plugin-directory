@@ -1,5 +1,5 @@
 {
-  "syncedAt": "2026-10-21T16:50:52.364Z",
+  "syncedAt": "2026-10-21T21:24:29.117Z",
   "total": 2000,
   "byCategory": {
     "tool": 47,
@@ -10,8 +10,8 @@
     "mcp": 79,
     "orchestration": 53,
     "cli-tui": 150,
-    "web": 245,
-    "agent": 216,
+    "web": 244,
+    "agent": 217,
     "other": 544
   },
   "byInstallForm": {
