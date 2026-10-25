@@ -1,13 +1,13 @@
 {
-  "syncedAt": "2026-10-25T10:57:58.824Z",
-  "total": 2005,
+  "syncedAt": "2026-10-25T15:46:22.362Z",
+  "total": 2006,
   "byCategory": {
     "tool": 48,
-    "skill": 265,
-    "memory": 137,
+    "skill": 266,
+    "memory": 135,
     "vision": 104,
-    "ui-skin": 165,
-    "mcp": 80,
+    "ui-skin": 166,
+    "mcp": 81,
     "orchestration": 51,
     "cli-tui": 147,
     "web": 244,
@@ -18,18 +18,18 @@
     "bundle": 0,
     "repo": 0,
     "client": 1,
-    "unknown": 2004
+    "unknown": 2005
   },
   "byLanguage": {
     "TypeScript": 704,
     "JavaScript": 903,
     "Go": 23,
-    "Python": 181,
+    "Python": 182,
     "Rust": 39,
     "Java": 5,
-    "HTML": 24,
+    "HTML": 25,
     "Swift": 5,
-    "other": 66,
+    "other": 65,
     "Kotlin": 14,
     "Shell": 16,
     "PowerShell": 8,
@@ -49,8 +49,8 @@
   "byStarBucket": {
     "1000+": 113,
     "200-999": 230,
-    "50-199": 384,
-    "10-49": 656,
-    "0-9": 622
+    "50-199": 383,
+    "10-49": 660,
+    "0-9": 620
   }
 }
