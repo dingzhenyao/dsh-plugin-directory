@@ -1,41 +1,41 @@
 {
-  "syncedAt": "2026-10-27T11:48:09.057Z",
-  "total": 2008,
+  "syncedAt": "2026-10-27T17:42:18.684Z",
+  "total": 1234,
   "byCategory": {
-    "tool": 50,
-    "skill": 264,
-    "memory": 144,
-    "vision": 105,
-    "ui-skin": 168,
-    "mcp": 80,
-    "orchestration": 51,
-    "cli-tui": 147,
-    "web": 242,
-    "agent": 218,
-    "other": 539
+    "tool": 27,
+    "skill": 185,
+    "memory": 106,
+    "vision": 63,
+    "ui-skin": 109,
+    "mcp": 65,
+    "orchestration": 38,
+    "cli-tui": 94,
+    "web": 140,
+    "agent": 142,
+    "other": 265
   },
   "byInstallForm": {
     "bundle": 0,
     "repo": 0,
     "client": 2,
-    "unknown": 2006
+    "unknown": 1232
   },
   "byLanguage": {
-    "TypeScript": 702,
-    "JavaScript": 906,
-    "Go": 23,
-    "Python": 181,
-    "Rust": 39,
-    "Java": 5,
-    "HTML": 25,
+    "TypeScript": 445,
+    "JavaScript": 476,
+    "Go": 21,
+    "Python": 143,
+    "Rust": 35,
+    "Java": 4,
+    "HTML": 23,
     "Swift": 5,
-    "other": 64,
-    "Kotlin": 15,
-    "Shell": 17,
-    "PowerShell": 9,
+    "other": 37,
+    "Kotlin": 14,
+    "Shell": 11,
+    "PowerShell": 6,
     "jq": 1,
     "Vue": 1,
-    "C++": 3,
+    "C++": 1,
     "Objective-C++": 1,
     "Dart": 1,
     "GDScript": 1,
@@ -43,14 +43,12 @@
     "Jupyter Notebook": 1,
     "Nix": 1,
     "CSS": 2,
-    "C#": 3,
-    "Roff": 1
+    "C#": 3
   },
   "byStarBucket": {
     "1000+": 115,
     "200-999": 236,
-    "50-199": 393,
-    "10-49": 653,
-    "0-9": 611
+    "50-199": 395,
+    "10-49": 488
   }
 }
