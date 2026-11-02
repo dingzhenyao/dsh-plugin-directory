@@ -1,35 +1,35 @@
 {
-  "syncedAt": "2026-11-01T21:49:14.112Z",
-  "total": 2024,
+  "syncedAt": "2026-11-02T05:03:45.213Z",
+  "total": 2023,
   "byCategory": {
     "tool": 50,
     "skill": 268,
-    "memory": 150,
-    "vision": 111,
-    "ui-skin": 174,
-    "mcp": 83,
-    "orchestration": 52,
-    "cli-tui": 148,
-    "web": 231,
-    "agent": 214,
-    "other": 543
+    "memory": 153,
+    "vision": 113,
+    "ui-skin": 173,
+    "mcp": 82,
+    "orchestration": 50,
+    "cli-tui": 147,
+    "web": 233,
+    "agent": 213,
+    "other": 541
   },
   "byInstallForm": {
-    "bundle": 2,
+    "bundle": 3,
     "repo": 0,
-    "client": 4,
-    "unknown": 2018
+    "client": 7,
+    "unknown": 2013
   },
   "byLanguage": {
     "TypeScript": 691,
     "JavaScript": 929,
-    "Go": 22,
-    "Python": 182,
-    "Java": 4,
+    "Go": 23,
+    "Python": 181,
     "Shell": 16,
     "HTML": 28,
     "Rust": 40,
     "Dart": 2,
+    "Java": 4,
     "Swift": 5,
     "other": 66,
     "Kotlin": 14,
@@ -42,15 +42,15 @@
     "Emacs Lisp": 1,
     "Jupyter Notebook": 1,
     "Nix": 1,
-    "CSS": 2,
+    "CSS": 1,
     "C#": 4,
     "Roff": 1
   },
   "byStarBucket": {
-    "1000+": 123,
+    "1000+": 122,
     "200-999": 263,
-    "50-199": 425,
-    "10-49": 619,
-    "0-9": 594
+    "50-199": 427,
+    "10-49": 618,
+    "0-9": 593
   }
 }
