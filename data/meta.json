@@ -1,38 +1,38 @@
 {
-  "syncedAt": "2026-11-05T05:46:02.359Z",
-  "total": 2029,
+  "syncedAt": "2026-11-05T14:17:12.784Z",
+  "total": 2027,
   "byCategory": {
     "tool": 51,
-    "skill": 267,
-    "memory": 157,
-    "vision": 115,
-    "ui-skin": 172,
-    "mcp": 85,
-    "orchestration": 51,
-    "cli-tui": 150,
+    "skill": 265,
+    "memory": 158,
+    "vision": 116,
+    "ui-skin": 173,
+    "mcp": 84,
+    "orchestration": 52,
+    "cli-tui": 151,
     "web": 235,
-    "agent": 205,
-    "other": 541
+    "agent": 203,
+    "other": 539
   },
   "byInstallForm": {
-    "bundle": 6,
+    "bundle": 5,
     "repo": 0,
-    "client": 7,
-    "unknown": 2016
+    "client": 4,
+    "unknown": 2018
   },
   "byLanguage": {
     "HTML": 29,
     "Python": 186,
-    "TypeScript": 695,
+    "TypeScript": 694,
     "Dart": 2,
-    "JavaScript": 929,
+    "JavaScript": 930,
     "Go": 23,
-    "Shell": 14,
+    "Shell": 13,
     "Rust": 40,
     "Java": 4,
     "Swift": 5,
     "other": 63,
-    "Kotlin": 14,
+    "Kotlin": 13,
     "PowerShell": 8,
     "Vue": 1,
     "C++": 2,
@@ -40,18 +40,18 @@
     "Objective-C++": 1,
     "GDScript": 1,
     "Emacs Lisp": 1,
+    "C#": 5,
     "Jupyter Notebook": 1,
     "Nix": 1,
     "CSS": 1,
-    "C#": 5,
     "Lua": 1,
     "Roff": 1
   },
   "byStarBucket": {
-    "1000+": 130,
-    "200-999": 267,
-    "50-199": 458,
-    "10-49": 595,
-    "0-9": 579
+    "1000+": 131,
+    "200-999": 268,
+    "50-199": 461,
+    "10-49": 596,
+    "0-9": 571
   }
 }
